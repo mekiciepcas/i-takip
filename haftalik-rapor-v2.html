@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Haftalık İş Takip Raporu</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --border:#2a2f3a;
+    --text:#e8eaed; --muted:#8a90a0; --accent:#5b8def;
+    --green:#3ecf8e; --amber:#e0a33e; --red:#e05d5d; --gray:#5a6070;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:28px;line-height:1.6}
+  .wrap{max-width:1100px;margin:0 auto}
+  h1{font-size:26px;font-weight:700;margin:0 0 6px;letter-spacing:-.3px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:28px;line-height:1.5}
+  .upload{border:2px dashed var(--border);border-radius:14px;padding:48px 40px;text-align:center;background:linear-gradient(135deg,rgba(91,141,239,.08) 0%,rgba(62,207,142,.04) 100%);cursor:pointer;transition:.3s;position:relative;overflow:hidden}
+  .upload::before{content:'📤';font-size:56px;display:block;margin-bottom:12px;opacity:.9;transition:.3s}
+  .upload:hover{border-color:var(--accent);background:linear-gradient(135deg,rgba(91,141,239,.15) 0%,rgba(62,207,142,.08) 100%);box-shadow:0 12px 32px rgba(91,141,239,.2)}
+  .upload:hover::before{transform:scale(1.15);opacity:1}
+  .upload input{display:none}
+  .upload-label{font-size:16px;color:var(--muted);font-weight:500;line-height:1.6}
+  .upload-label b{color:var(--accent);font-weight:700;display:block;margin-bottom:2px}
+  .toolbar{display:none;gap:12px;margin:24px 0;flex-wrap:wrap;align-items:center}
+  .toolbar.show{display:flex}
+  .search{flex:1;min-width:200px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:14px;transition:.2s}
+  .search:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,141,239,.1)}
+  select.sheetFilter{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:14px;cursor:pointer;transition:.2s}
+  select.sheetFilter:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,141,239,.1)}
+  .chip{padding:8px 14px;border-radius:20px;border:1px solid var(--border);background:var(--panel2);color:var(--muted);font-size:13px;cursor:pointer;white-space:nowrap;transition:.2s;font-weight:500}
+  .chip:hover{border-color:var(--accent);color:var(--text)}
+  .chip.active{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 4px 12px rgba(91,141,239,.2)}
+  .spacer{flex:1}
+  .btn{font-size:13px;padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--panel2);color:var(--text);cursor:pointer;white-space:nowrap;transition:.2s;font-weight:500}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .btn.primary:hover{background:#4a7dd1;box-shadow:0 4px 12px rgba(91,141,239,.3)}
+  .reload{font-size:13px;color:var(--muted);cursor:pointer;text-decoration:underline;transition:.2s;font-weight:500}
+  .reload:hover{color:var(--accent)}
+  .cards{display:none;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+  .cards.show{display:grid}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;transition:.3s;cursor:default;position:relative;overflow:hidden}
+  .card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.3)}
+  .card .n{font-size:28px;font-weight:700;position:relative;z-index:1}
+  .card .l{font-size:12px;color:var(--muted);margin-top:4px;font-weight:500;position:relative;z-index:1}
+  .card.total{background:linear-gradient(135deg,rgba(91,141,239,.08) 0%,rgba(62,207,142,.04) 100%);border-color:rgba(91,141,239,.2)}
+  .card.done{background:linear-gradient(135deg,rgba(62,207,142,.08) 0%,rgba(62,207,142,.04) 100%);border-color:rgba(62,207,142,.2)}
+  .card.done .n{color:var(--green)}
+  .card.progress{background:linear-gradient(135deg,rgba(91,141,239,.08) 0%,rgba(91,141,239,.04) 100%);border-color:rgba(91,141,239,.2)}
+  .card.progress .n{color:var(--accent)}
+  .card.pending{background:linear-gradient(135deg,rgba(224,163,62,.08) 0%,rgba(224,163,62,.04) 100%);border-color:rgba(224,163,62,.2)}
+  .card.pending .n{color:var(--amber)}
+  table{width:100%;border-collapse:collapse;display:none;background:var(--panel);border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+  table.show{display:table}
+  thead{background:linear-gradient(135deg,rgba(91,141,239,.08) 0%,rgba(62,207,142,.04) 100%)}
+  thead th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;color:var(--accent);padding:12px 16px;border-bottom:2px solid var(--border)}
+  tbody td{padding:14px 16px;border-bottom:1px solid var(--border);font-size:13.5px;vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:var(--panel2);transition:.15s}
+  tbody tr.new-item{box-shadow:0 0 0 2px rgba(224,93,93,.3)!important}
+  .sheet-tag{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:600;background:rgba(91,141,239,.1);padding:2px 8px;border-radius:4px;display:inline-block}
+  .topic{font-weight:700;color:var(--text)}
+  .badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
+  .b-active{background:rgba(91,141,239,.15);color:var(--accent)}
+  .b-closed{background:rgba(62,207,142,.15);color:var(--green)}
+  .b-suspended{background:rgba(224,163,62,.15);color:var(--amber)}
+  .b-other{background:rgba(90,96,112,.15);color:var(--gray)}
+  .p-1,.p-2{color:var(--green);font-weight:700;background:rgba(62,207,142,.1);padding:2px 6px;border-radius:4px}
+  .p-3{color:var(--amber);font-weight:700;background:rgba(224,163,62,.1);padding:2px 6px;border-radius:4px}
+  .p-4,.p-5{color:var(--red);font-weight:700;background:rgba(224,93,93,.1);padding:2px 6px;border-radius:4px}
+  .p-none{color:var(--muted);font-weight:500}
+  .note{color:var(--muted);font-size:13px;line-height:1.5}
+  .weekly-history{width:100%;min-width:280px;max-width:760px}
+  .weekly-history summary{cursor:pointer;color:var(--accent);font-weight:600;list-style:none;padding:7px 9px;border:1px solid var(--border);border-radius:7px;background:rgba(91,141,239,.06)}
+  .weekly-history summary::-webkit-details-marker{display:none}
+  .weekly-history summary::before{content:'+';display:inline-block;width:18px;font-size:16px}
+  .weekly-history[open] summary::before{content:'−'}
+  .weekly-count{color:var(--muted);font-weight:500;margin-left:5px}
+  .weekly-list{margin-top:8px;padding-left:12px;border-left:2px solid rgba(91,141,239,.25);max-height:360px;overflow:auto}
+  .weekly-item{padding:0 0 12px 10px;position:relative}
+  .weekly-item::before{content:'';position:absolute;left:-17px;top:5px;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .weekly-item:last-child{padding-bottom:2px}
+  .weekly-label{display:block;color:var(--accent);font-size:11px;font-weight:700;margin-bottom:2px}
+  .weekly-value{display:block;color:var(--muted);white-space:pre-wrap;word-break:break-word}
+  .comparison-flag{display:inline-block;margin-top:7px;padding:3px 7px;border-radius:4px;background:rgba(224,163,62,.14);color:var(--amber);font-size:11px;font-weight:600}
+  .comparison-flag.missing{background:rgba(224,93,93,.14);color:var(--red)}
+  .new-badge{display:inline-block;background:var(--red);color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;margin-left:4px;text-transform:uppercase}
+  .empty{color:var(--muted);text-align:center;padding:80px 0;display:none;font-size:15px}
+  .empty.show{display:block}
+  .loading{display:none;text-align:center;padding:40px;color:var(--muted)}
+  .loading.show{display:block}
+  .spinner{display:inline-block;width:20px;height:20px;border:3px solid rgba(91,141,239,.2);border-top:3px solid var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin-right:10px}
+  @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+  .alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;display:none;font-size:13px;font-weight:500}
+  .alert.show{display:block}
+  .alert.error{background:rgba(224,93,93,.15);color:var(--red);border:1px solid rgba(224,93,93,.3)}
+  .alert.warning{background:rgba(224,163,62,.15);color:var(--amber);border:1px solid rgba(224,163,62,.3)}
+  .alert.success{background:rgba(62,207,142,.15);color:var(--green);border:1px solid rgba(62,207,142,.3)}
+  .alert.info{background:rgba(91,141,239,.15);color:var(--accent);border:1px solid rgba(91,141,239,.3)}
+  .theme-toggle{width:50px;height:26px;background:var(--panel2);border:1px solid var(--border);border-radius:13px;cursor:pointer;position:relative;transition:.2s;display:flex;align-items:center;padding:0 2px}
+  .theme-toggle.light{background:var(--accent)}
+  .theme-toggle span{width:22px;height:22px;background:var(--text);border-radius:11px;transition:.2s;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .theme-toggle.light span{margin-left:24px}
+  .export-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px;padding:6px;background:var(--panel2);border:1px solid var(--border);border-radius:10px}
+  .export-tab{padding:8px 14px;border:0;border-radius:7px;background:transparent;color:#667085;cursor:pointer;font-weight:600}
+  .export-tab.active{background:#3968c7;color:#fff}
+  @media(max-width:768px){
+    body{padding:16px}
+    .wrap{max-width:100%}
+    h1{font-size:20px}
+    .upload{padding:32px 20px}
+    .upload::before{font-size:40px;margin-bottom:8px}
+    .toolbar{flex-direction:column;align-items:stretch;gap:8px}
+    .toolbar>div[style*="display:flex"]{flex-direction:column}
+    .search{width:100%}
+    select.sheetFilter{width:100%}
+    .chip{flex:1;text-align:center}
+    .btn{width:100%;margin-top:4px}
+    .reload{text-align:center}
+    table{font-size:12px}
+    thead th{padding:8px}
+    tbody td{padding:8px}
+    .card .n{font-size:20px}
+  }
+  @media(max-width:480px){
+    .cards{grid-template-columns:repeat(2,1fr)}
+    table{font-size:11px}
+    tbody td{padding:6px}
+  }
+  /* Minimal corporate visual layer */
+  body{background:#f5f7f9;color:#1f2933;font-family:"Segoe UI",Arial,sans-serif;padding:32px}
+  .wrap{max-width:1180px}
+  h1{color:#17324d;font-size:24px;letter-spacing:0;margin:0}
+  .sub{color:#667482;max-width:760px;margin:0 0 24px}
+  .upload{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;min-height:230px;border:1px solid #cbd7e0;border-radius:8px;padding:32px;background:#fff;box-shadow:0 2px 8px rgba(23,50,77,.06)}
+  .upload::before{content:"";display:block;flex:0 0 34px;width:34px;height:34px;margin:0 0 14px;border:2px solid #2a6f9b;border-radius:50%;opacity:.9}
+  .upload:hover{border-color:#2a6f9b;background:#fafdff;box-shadow:0 5px 16px rgba(23,50,77,.1)}
+  .upload:hover::before{transform:none}
+  .upload-label{color:#667482;font-size:14px}
+  .upload-label b{color:#1d628c}
+  .toolbar{gap:10px;margin:18px 0;padding:12px;background:#fff;border:1px solid #d8e1e8;border-radius:8px}
+  .search,select.sheetFilter,.btn,.chip{border-radius:6px;background:#fff;border-color:#cbd7e0;color:#334e62}
+  .chip{padding:7px 11px}
+  .chip.active,.btn.primary{background:#1d628c;border-color:#1d628c;color:#fff;box-shadow:none}
+  .btn{padding:9px 13px}
+  .btn.primary:hover{background:#174f73;box-shadow:none}
+  .reload{color:#667482}
+  .cards{gap:10px;margin-bottom:18px}
+  .card{background:#fff!important;border:1px solid #d8e1e8!important;border-top:3px solid #1d628c!important;border-radius:8px;padding:16px;box-shadow:0 2px 8px rgba(23,50,77,.04)}
+  .card:hover{transform:none;box-shadow:0 3px 10px rgba(23,50,77,.08)}
+  .card.done{border-top-color:#27845e!important}.card.pending{border-top-color:#ae781e!important}.card.progress{border-top-color:#1d628c!important}
+  .card .n{color:#17324d!important;font-size:25px}.card.done .n{color:#27845e!important}.card.pending .n{color:#ae781e!important}.card.progress .n{color:#1d628c!important}
+  table{background:#fff;border:1px solid #d8e1e8;border-radius:8px;box-shadow:0 2px 10px rgba(23,50,77,.06)}
+  thead{background:#edf3f7}thead th{color:#36566d;padding:11px 14px;border-bottom:1px solid #cbd7e0}
+  tbody td{padding:12px 14px;border-bottom:1px solid #e5ebef;color:#334e62}tbody tr:hover{background:#f7fafc}
+  .topic{color:#17324d}.sheet-tag{background:#edf3f7;color:#557084}.badge{border-radius:5px}
+  .weekly-history{min-width:280px;max-width:620px}.weekly-history summary{background:#f7fafc;border-color:#cbd7e0;color:#1d628c}
+  .theme-toggle{border-radius:13px}
+  @media(max-width:768px){body{padding:16px}.upload{padding:30px 20px}.toolbar{padding:10px}.btn{width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <h1>Haftalık İş Takip Raporu</h1>
+    <div class="theme-toggle" id="themeToggle" title="Tema değiştir (Ctrl+T)">
+      <span id="themeIcon">🌙</span>
+    </div>
+  </div>
+  <div class="alert" id="alert"></div>
+  <div class="sub">Excel dosyanızı yükleyin — tüm sayfalar okunur, sütunlar otomatik algılanır (Konu, Önem, Durum, Güncel Durum, haftalık notlar).</div>
+
+  <label class="upload" id="dropzone" title="Fare ile dosya sürükleyin veya tıklayın">
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" aria-label="Excel dosyası seçin">
+    <div class="upload-label"><b>Dosya seçmek için tıklayın</b><br>veya sürükleyip bırakın<br><small style="color:var(--muted);font-size:12px">(.xlsx, .xls, .csv)</small></div>
+  </label>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div> Dosya işleniyor...
+  </div>
+
+  <div class="toolbar" id="toolbar">
+    <input class="search" id="searchBox" placeholder="Konu ara...">
+    <select class="sheetFilter" id="sheetFilter"></select>
+    <select class="sheetFilter" id="serviceFilter" aria-label="Etkilenen servis filtresi"><option value="all">Tüm Servisler</option></select>
+    <select class="sheetFilter" id="topicTypeFilter" aria-label="Konu tipi filtresi"><option value="all">Tüm Konu Tipleri</option></select>
+    <select class="sheetFilter" id="closingDateFilter" aria-label="Planlanan kapanış tarihi filtresi"><option value="all">Tüm Kapanış Tarihleri</option></select>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <span style="font-size:12px;color:var(--muted);font-weight:600">Durum:</span>
+      <div class="chip active" data-filter="all">Tümü</div>
+      <div class="chip" data-filter="active">Aktif</div>
+      <div class="chip" data-filter="closed">Kapandı</div>
+      <div class="chip" data-filter="suspended">Askıda</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <span style="font-size:12px;color:var(--muted);font-weight:600">Önem:</span>
+      <div class="chip active" data-priority="all-priority">Tümü</div>
+      <div class="chip" data-priority="p1">1</div>
+      <div class="chip" data-priority="p2">2</div>
+      <div class="chip" data-priority="p3">3</div>
+      <div class="chip" data-priority="p4">4</div>
+      <div class="chip" data-priority="p5">5</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="btn primary" id="downloadBtn">Filtreli Raporu İndir</div>
+    <div class="btn primary" id="downloadAllBtn" style="background:#3ecf8e;border-color:#3ecf8e">Tüm Konuları İndir</div>
+    <div class="reload" id="reloadBtn">başka dosya yükle</div>
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <table id="table">
+    <thead><tr>
+      <th>Sayfa</th><th>Konu</th><th>Etkilenen Servis</th><th>Konu Tipi</th><th>Planlanan Kapanış Tarihi</th><th>Önem (1–5)</th><th>Durum</th><th>Güncel Durum (Son Hafta)</th><th>Haftalık Güncellemeler</th>
+    </tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <div class="empty" id="emptyMsg">Filtreye uyan konu bulunamadı.</div>
+</div>
+
+<script>
+// ===== LOGGER SYSTEM =====
+const Logger = {
+  logs: [],
+  maxLogs: 100,
+  log(level, msg, data) {
+    const entry = {ts: new Date().toISOString(), level, msg, data};
+    this.logs.push(entry);
+    if(this.logs.length > this.maxLogs) this.logs.shift();
+    console.log(`[${level}] ${msg}`, data || '');
+    if(level === 'ERROR') this.saveLogs();
+  },
+  saveLogs() {
+    try { localStorage.setItem('app_logs', JSON.stringify(this.logs.slice(-20))); } catch(e) {}
+  }
+};
+
+// ===== ALERT SYSTEM =====
+const AlertUI = {
+  show(msg, type = 'info', duration = 4000) {
+    const el = document.getElementById('alert');
+    el.textContent = msg;
+    el.className = `alert show ${type}`;
+    Logger.log(type.toUpperCase(), msg);
+    if(duration) setTimeout(() => el.classList.remove('show'), duration);
+  },
+  error(msg) { this.show('❌ ' + msg, 'error'); },
+  warning(msg) { this.show('⚠️ ' + msg, 'warning'); },
+  success(msg) { this.show('✅ ' + msg, 'success', 3000); },
+  info(msg) { this.show('ℹ️ ' + msg, 'info'); }
+};
+
+// ===== VALIDATION LAYER =====
+const Validator = {
+  isValidFile(file) {
+    const maxSize = 50 * 1024 * 1024;
+    if(!file) return {ok: false, msg: 'Dosya seçilmedi'};
+    if(file.size > maxSize) return {ok: false, msg: `Dosya çok büyük (max 50MB)`};
+    const ext = file.name.split('.').pop().toLowerCase();
+    if(!['xlsx', 'xls', 'csv'].includes(ext)) return {ok: false, msg: 'Sadece .xlsx, .xls, .csv dosyaları desteklenir'};
+    return {ok: true};
+  },
+  isValidRows(rows) {
+    if(!Array.isArray(rows)) return {ok: false, msg: 'Geçersiz veri formatı'};
+    if(rows.length === 0) return {ok: false, msg: 'Dosya boş veya okunamadı'};
+    if(rows.length > 10000) return {ok: false, msg: `Çok fazla veri (${rows.length} satır)`};
+    return {ok: true};
+  }
+};
+
+// ===== THEME MANAGER =====
+const ThemeManager = {
+  key: 'app_theme',
+  init() {
+    const saved = localStorage.getItem(this.key) || 'dark';
+    this.set(saved);
+    document.getElementById('themeToggle').addEventListener('click', () => this.toggle());
+    document.addEventListener('keydown', e => {
+      if(e.ctrlKey && e.key === 't') { e.preventDefault(); this.toggle(); }
+    });
+  },
+  set(theme) {
+    document.documentElement.style.colorScheme = theme;
+    const root = document.documentElement;
+    if(theme === 'light') {
+      root.style.setProperty('--bg', '#ffffff');
+      root.style.setProperty('--panel', '#f5f5f5');
+      root.style.setProperty('--panel2', '#ececec');
+      root.style.setProperty('--border', '#d8d8d8');
+      root.style.setProperty('--text', '#1a1a1a');
+      root.style.setProperty('--muted', '#666666');
+      document.getElementById('themeToggle').classList.add('light');
+      document.getElementById('themeIcon').textContent = '☀️';
+    } else {
+      root.style.setProperty('--bg', '#0f1115');
+      root.style.setProperty('--panel', '#171a21');
+      root.style.setProperty('--panel2', '#1e222b');
+      root.style.setProperty('--border', '#2a2f3a');
+      root.style.setProperty('--text', '#e8eaed');
+      root.style.setProperty('--muted', '#8a90a0');
+      document.getElementById('themeToggle').classList.remove('light');
+      document.getElementById('themeIcon').textContent = '🌙';
+    }
+    localStorage.setItem(this.key, theme);
+  },
+  toggle() {
+    const current = localStorage.getItem(this.key) || 'dark';
+    this.set(current === 'dark' ? 'light' : 'dark');
+  }
+};
+
+// ===== KEYBOARD NAVIGATION =====
+const KeyboardNav = {
+  init() {
+    document.addEventListener('keydown', e => {
+      if(e.ctrlKey) {
+        if(e.key === 'f') { e.preventDefault(); document.getElementById('searchBox').focus(); }
+        if(e.key === 's') { e.preventDefault(); document.getElementById('downloadBtn').click(); }
+        if(e.key === 'a') { e.preventDefault(); document.getElementById('downloadAllBtn').click(); }
+      }
+      if(e.key === 'Escape') { document.getElementById('reloadBtn').click(); }
+    });
+  }
+};
+
+// ===== APPLICATION DATA =====
+let filterState = 'all';
+let priorityFilter = 'all-priority';
+let sheetState = 'all';
+let columnFilters = {service:'all', topicType:'all', closingDate:'all'};
+let sourceFileName = 'rapor';
+let newTopicIds = new Set();
+let previousTopicIds = new Set();
+try {
+  const storedTopicIds = JSON.parse(localStorage.getItem('reportTopicIds') || '[]');
+  if(Array.isArray(storedTopicIds)) previousTopicIds = new Set(storedTopicIds);
+} catch(err) {
+  Logger.log('WARN', 'Stored topic history could not be read', err);
+}
+
+const fileInput = document.getElementById('fileInput');
+const dropzone = document.getElementById('dropzone');
+
+fileInput.addEventListener('change', function(e) {
+  if(e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+dropzone.addEventListener('dragover', function(e) {
+  e.preventDefault();
+});
+
+dropzone.addEventListener('drop', function(e) {
+  e.preventDefault();
+  if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+
+document.getElementById('reloadBtn').addEventListener('click', function() {
+  fileInput.value = '';
+  rows = [];
+  document.getElementById('toolbar').classList.remove('show');
+  document.getElementById('cards').classList.remove('show');
+  document.getElementById('table').classList.remove('show');
+  document.getElementById('emptyMsg').classList.remove('show');
+});
+
+document.getElementById('downloadBtn').addEventListener('click', function() {
+  downloadReport(false);
+});
+
+document.getElementById('downloadAllBtn').addEventListener('click', function() {
+  downloadReport(true);
+});
+
+function handleFile(file) {
+  try {
+    const validation = Validator.isValidFile(file);
+    if(!validation.ok) {
+      AlertUI.error(validation.msg);
+      Logger.log('ERROR', 'Invalid file', validation);
+      return;
+    }
+    
+    sourceFileName = file.name.replace(/\.[^.]+$/, '');
+    document.getElementById('loading').classList.add('show');
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        parseWorkbook(wb);
+        AlertUI.success(`${wb.SheetNames.length} sayfa, ${rows.length} konu yüklendi`);
+        document.getElementById('loading').classList.remove('show');
+      } catch(err) {
+        document.getElementById('loading').classList.remove('show');
+        AlertUI.error('Dosya okunurken hata oluştu: ' + err.message);
+        Logger.log('ERROR', 'Parse error', err);
+      }
+    };
+    reader.onerror = function() {
+      document.getElementById('loading').classList.remove('show');
+      AlertUI.error('Dosya okuma hatası');
+      Logger.log('ERROR', 'FileReader error');
+    };
+    reader.readAsArrayBuffer(file);
+  } catch(err) {
+    AlertUI.error('Beklenmedik hata: ' + err.message);
+    Logger.log('ERROR', 'Unexpected error in handleFile', err);
+  }
+}
+
+function norm(s) {
+  return String(s).toLowerCase()
+    .replace(/ı/g,'i').replace(/ş/g,'s').replace(/ğ/g,'g')
+    .replace(/ü/g,'u').replace(/ö/g,'o').replace(/ç/g,'c').trim();
+}
+
+function splitServices(value) {
+  return [...new Set(String(value || '').split(',').map(service => service.trim()).filter(Boolean))];
+}
+
+function parseClosingDate(value) {
+  const text = String(value || '').trim();
+  let match = text.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+  if(match) return {day:Number(match[1]), month:Number(match[2]), year:Number(match[3])};
+  match = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if(match) return {year:Number(match[1]), month:Number(match[2]), day:Number(match[3])};
+  return null;
+}
+
+function populateValueFilter(id, values, allLabel) {
+  const select = document.getElementById(id);
+  const currentValue = select.value;
+  const uniqueValues = new Map();
+  values.forEach(value => {
+    const text = String(value || '').trim();
+    if(text && !uniqueValues.has(norm(text))) uniqueValues.set(norm(text), text);
+  });
+  select.innerHTML = '<option value="all">' + escapeHtml(allLabel) + '</option>' +
+    Array.from(uniqueValues.values()).sort((a, b) => a.localeCompare(b, 'tr')).map(value =>
+      '<option value="' + escapeHtml(value) + '">' + escapeHtml(value) + '</option>'
+    ).join('');
+  if(Array.from(uniqueValues.values()).some(value => norm(value) === norm(currentValue))) select.value = currentValue;
+  else select.value = 'all';
+}
+
+function parseSheetRows(data, sheetName) {
+  try {
+    if(!Array.isArray(data) || data.length < 2) return [];
+    
+    const headers = data[0].map(h => String(h));
+    let topicIdx=-1, serviceIdx=-1, topicTypeIdx=-1, closingDateIdx=-1;
+    let priorityIdx=-1, statusIdx=-1, currentIdx=-1;
+    const weeklyCols = [];
+
+    headers.forEach((h,i) => {
+      const n = norm(h);
+      if(serviceIdx===-1 && n.includes('etkilenen') && n.includes('servis')) serviceIdx=i;
+      else if(topicTypeIdx===-1 && n.includes('konu') && n.includes('tip')) topicTypeIdx=i;
+      else if(closingDateIdx===-1 && n.includes('planlanan') && n.includes('kapan')) closingDateIdx=i;
+      else if(topicIdx===-1 && n.includes('konu')) topicIdx=i;
+      else if(priorityIdx===-1 && (n.includes('onem') || n.includes('oncelik'))) priorityIdx=i;
+      else if(currentIdx===-1 && n.includes('guncel')) currentIdx=i;
+      else if(statusIdx===-1 && n.includes('durum')) statusIdx=i;
+      else weeklyCols.push({idx:i, label:h});
+    });
+    if(topicIdx===-1) topicIdx = 0;
+
+    const result = data.slice(1)
+      .filter(r => r[topicIdx] !== undefined && String(r[topicIdx]).trim() !== '')
+      .map(r => {
+        const weekly = weeklyCols
+          .map(w => ({label:w.label, val: String(r[w.idx]||'').trim()}))
+          .filter(w => w.val !== '');
+        return {
+          sheet: sheetName,
+          topic: String(r[topicIdx]||'').trim(),
+          service: serviceIdx>-1 ? String(r[serviceIdx]||'').trim() : '',
+          topicType: topicTypeIdx>-1 ? String(r[topicTypeIdx]||'').trim() : '',
+          closingDate: closingDateIdx>-1 ? formatClosingDate(r[closingDateIdx]) : '',
+          priority: priorityIdx>-1 ? String(r[priorityIdx]||'').trim() : '',
+          status: statusIdx>-1 ? String(r[statusIdx]||'').trim() : '',
+          current: currentIdx>-1 ? String(r[currentIdx]||'').trim() : '',
+          weekly
+        };
+      });
+    
+    Logger.log('INFO', `Parsed sheet ${sheetName}`, {rows: result.length});
+    return result;
+  } catch(err) {
+    Logger.log('ERROR', `Parse error in sheet ${sheetName}`, err);
+    return [];
+  }
+}
+
+function formatClosingDate(value) {
+  if(value instanceof Date && !Number.isNaN(value.getTime())) {
+    return [value.getDate(), value.getMonth() + 1, value.getFullYear()]
+      .map((part, index) => index < 2 ? String(part).padStart(2, '0') : String(part))
+      .join('.');
+  }
+  if(typeof value === 'number' && Number.isFinite(value)) {
+    const date = XLSX.SSF.parse_date_code(value);
+    if(date) return [date.d, date.m, date.y]
+      .map((part, index) => index < 2 ? String(part).padStart(2, '0') : String(part))
+      .join('.');
+  }
+  const text = String(value || '').trim();
+  const parts = parseClosingDate(text);
+  if(parts && parts.month >= 1 && parts.month <= 12 && parts.day >= 1 && parts.day <= 31) {
+    return [parts.day, parts.month, parts.year]
+      .map((part, index) => index < 2 ? String(part).padStart(2, '0') : String(part))
+      .join('.');
+  }
+  return text;
+}
+
+function parseWorkbook(wb) {
+  try {
+    rows = [];
+    newTopicIds = new Set();
+    
+    if(!wb || !Array.isArray(wb.SheetNames) || wb.SheetNames.length === 0) {
+      throw new Error('Dosya yapısı geçersiz');
+    }
+    
+    wb.SheetNames.forEach(name => {
+      try {
+        const data = XLSX.utils.sheet_to_json(wb.Sheets[name], {header:1, defval:''});
+        rows = rows.concat(parseSheetRows(data, name));
+      } catch(err) {
+        Logger.log('WARN', `Could not parse sheet ${name}`, err);
+        AlertUI.warning(`"${name}" sayfası okunurken sorun yaşandı`);
+      }
+    });
+
+    rows.forEach(r => {
+      const id = r.sheet + '|' + norm(r.topic);
+      if(!previousTopicIds.has(id)) newTopicIds.add(id);
+    });
+    previousTopicIds = new Set(rows.map(r => r.sheet + '|' + norm(r.topic)));
+    localStorage.setItem('reportTopicIds', JSON.stringify(Array.from(previousTopicIds)));
+
+    const rowValidation = Validator.isValidRows(rows);
+    if(!rowValidation.ok) {
+      AlertUI.error(rowValidation.msg);
+      return;
+    }
+
+    const sel = document.getElementById('sheetFilter');
+    sel.innerHTML = '<option value="all">Tüm Sayfalar</option>' +
+      wb.SheetNames.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+    sel.onchange = function() {
+      sheetState = sel.value;
+      renderTable();
+    };
+    sheetState = 'all';
+    populateValueFilter('serviceFilter', rows.flatMap(row => splitServices(row.service)), 'Tüm Servisler');
+    populateValueFilter('topicTypeFilter', rows.map(row => row.topicType), 'Tüm Konu Tipleri');
+    populateValueFilter('closingDateFilter', rows.map(row => row.closingDate), 'Tüm Kapanış Tarihleri');
+    document.getElementById('serviceFilter').value = 'all';
+    document.getElementById('topicTypeFilter').value = 'all';
+    document.getElementById('closingDateFilter').value = 'all';
+    columnFilters = {service:'all', topicType:'all', closingDate:'all'};
+
+    render();
+    Logger.log('SUCCESS', 'Workbook parsed', {sheets: wb.SheetNames.length, rows: rows.length});
+  } catch(err) {
+    AlertUI.error('Dosya işlenirken hata: ' + err.message);
+    Logger.log('ERROR', 'Workbook parse error', err);
+  }
+}
+
+function classifyStatus(s) {
+  const n = norm(s);
+  if(n.includes('kapan') || n.includes('tamam') || n.includes('bitti')) return {key:'closed', label:'Kapandı', cls:'b-closed'};
+  if(n.includes('aski') || n.includes('bekli') || n.includes('baslamadi') || n.includes('planlan')) return {key:'suspended', label:'Askıda', cls:'b-suspended'};
+  return {key:'active', label:'Aktif', cls:'b-active'};
+}
+
+function classifyPriority(p) {
+  const n = norm(p);
+  const numeric = Number.parseInt(n.match(/[1-5]/)?.[0] || '', 10);
+  if(Number.isInteger(numeric) && numeric >= 1 && numeric <= 5) return {key:'p' + numeric, label:String(numeric), cls:'p-' + numeric};
+  return {key:'none', label:'—', cls:'p-none'};
+}
+
+function renderWeeklyUpdates(weekly) {
+  if(!weekly || !weekly.length) return '<span class="weekly-empty">Haftalık güncelleme yok</span>';
+  const latest = weekly[weekly.length - 1];
+  const items = weekly.slice().reverse().map(item =>
+    '<div class="weekly-item" style="padding:0 0 12px 10px;position:relative"><span class="weekly-label" style="display:block;color:#1769aa;font-size:11px;font-weight:700;margin-bottom:2px">' + escapeHtml(item.label) + '</span><span class="weekly-value" style="display:block;color:#465560;white-space:pre-wrap;word-break:break-word">' + escapeHtml(item.val) + '</span></div>'
+  ).join('');
+  return '<details class="weekly-history" style="display:block;width:100%;min-width:500px;max-width:900px"><summary style="cursor:pointer;color:#1769aa;font-weight:600;padding:9px 11px;border:1px solid #dce3e9;border-radius:7px;background:#f5f9fc">Son güncelleme: ' + escapeHtml(latest.label) + '<span class="weekly-count" style="color:#6b7785;font-weight:500;margin-left:5px">(' + weekly.length + ' hafta)</span></summary><div class="weekly-list" style="margin-top:8px;padding-left:12px;border-left:2px solid #cfe1ee;max-height:360px;overflow:auto">' + items + '</div></details>';
+}
+
+function latestWeeklyUpdate(weekly) {
+  return weekly && weekly.length ? weekly[weekly.length - 1] : null;
+}
+
+function compareCurrentWithLatest(current, weekly) {
+  const latest = latestWeeklyUpdate(weekly);
+  const currentText = norm(current).replace(/\s+/g, ' ');
+  if(!latest) return {state:'none', latest:null};
+  const latestText = norm(latest.val).replace(/\s+/g, ' ');
+  if(!currentText) return {state:'missing', latest};
+  if(currentText === latestText || currentText.includes(latestText) || latestText.includes(currentText)) return {state:'match', latest};
+  return {state:'different', latest};
+}
+
+function renderCurrentComparison(current, weekly) {
+  const comparison = compareCurrentWithLatest(current, weekly);
+  const latestHtml = comparison.latest ? escapeHtml(comparison.latest.val) : (current ? escapeHtml(current) : '<span style="color:var(--muted)">—</span>');
+  if(comparison.state === 'different') return latestHtml + '<span class="comparison-flag" style="display:inline-block;margin-top:7px;padding:3px 7px;border-radius:4px;background:#fff1d9;color:#a56800;font-size:11px;font-weight:600" title="Manuel Güncel Durum: ' + escapeHtml(current) + '">Manuel alan farklı</span>';
+  return latestHtml;
+}
+
+function closingDensityMarkup(sheetRows) {
+  const months = new Map();
+  const now = new Date();
+  const firstMonth = Date.UTC(now.getFullYear(), now.getMonth(), 1);
+  let timelineStartMonth = firstMonth;
+  let lastMonth = firstMonth;
+  let undatedCount = 0;
+  sheetRows.forEach(row => {
+    const status = classifyStatus(row.status);
+    if(status.key === 'closed') return;
+    const date = parseClosingDate(row.closingDate);
+    if(!date || date.month < 1 || date.month > 12 || date.day < 1 || date.day > 31) {
+      undatedCount++;
+      return;
+    }
+    const closeTimestamp = Date.UTC(date.year, date.month - 1, date.day);
+    const normalizedDate = new Date(closeTimestamp);
+    if(normalizedDate.getUTCFullYear() !== date.year || normalizedDate.getUTCMonth() !== date.month - 1 || normalizedDate.getUTCDate() !== date.day) {
+      undatedCount++;
+      return;
+    }
+    const closeMonth = Math.max(firstMonth, Date.UTC(date.year, date.month - 1, 1));
+    timelineStartMonth = Math.min(timelineStartMonth, Date.UTC(date.year, date.month - 1, 1));
+    lastMonth = Math.max(lastMonth, closeMonth);
+    const priorityValue = Number.parseInt(classifyPriority(row.priority).label, 10);
+    const priority = Number.isInteger(priorityValue) ? priorityValue : 1;
+    for(let timestamp = firstMonth; timestamp <= closeMonth; timestamp = Date.UTC(new Date(timestamp).getUTCFullYear(), new Date(timestamp).getUTCMonth() + 1, 1)) {
+      const monthDate = new Date(timestamp);
+      const monthKey = monthDate.getUTCFullYear() + '-' + String(monthDate.getUTCMonth() + 1).padStart(2, '0');
+      if(!months.has(monthKey)) months.set(monthKey, {year:monthDate.getUTCFullYear(), month:monthDate.getUTCMonth() + 1, activeCount:0, workload:0, priorities:{1:0,2:0,3:0,4:0,5:0}, unrated:0, suspended:0, overdue:0, highestPriority:0});
+      const month = months.get(monthKey);
+      if(status.key === 'suspended') {
+        month.suspended++;
+      } else {
+        month.activeCount++;
+        month.workload += priority;
+        if(Number.isInteger(priorityValue)) month.priorities[priority]++;
+        else month.unrated++;
+        month.highestPriority = Math.max(month.highestPriority, priority);
+        if(closeMonth === firstMonth && Date.UTC(date.year, date.month - 1, 1) < firstMonth) month.overdue++;
+      }
+    }
+  });
+  if(!months.size) return '<section class="density-calendar"><h3>Aylık İş Yükü Tahmini</h3><p class="calendar-empty">Açık konular için planlanan kapanış tarihi bulunamadı.</p>' + (undatedCount ? '<p class="density-unplanned">Planlı tarihi olmayan açık konu: ' + undatedCount + '</p>' : '') + '</section>';
+
+  const maxWorkload = Math.max(1, ...Array.from(months.values(), month => month.workload));
+  const priorityColors = {0:'148, 163, 184',1:'34, 139, 94',2:'132, 180, 62',3:'226, 178, 35',4:'230, 128, 35',5:'210, 67, 67'};
+  const monthCount = (new Date(lastMonth).getUTCFullYear() - new Date(timelineStartMonth).getUTCFullYear()) * 12 + new Date(lastMonth).getUTCMonth() - new Date(timelineStartMonth).getUTCMonth() + 1;
+  const yearColors = ['#2357d8','#11786d','#bd2525','#334155'];
+  const yearBands = [];
+  let monthOffset = 0;
+  while(monthOffset < monthCount) {
+    const date = new Date(Date.UTC(new Date(timelineStartMonth).getUTCFullYear(), new Date(timelineStartMonth).getUTCMonth() + monthOffset, 1));
+    const year = date.getUTCFullYear();
+    let span = 0;
+    while(monthOffset + span < monthCount) {
+      const bandDate = new Date(Date.UTC(new Date(timelineStartMonth).getUTCFullYear(), new Date(timelineStartMonth).getUTCMonth() + monthOffset + span, 1));
+      if(bandDate.getUTCFullYear() !== year) break;
+      span++;
+    }
+    yearBands.push('<div class="timeline-year" style="grid-column:span ' + span + ';--year-color:' + yearColors[year % yearColors.length] + '">' + year + '</div>');
+    monthOffset += span;
+  }
+  const monthCells = [];
+  for(let offset = 0; offset < monthCount; offset++) {
+    const date = new Date(Date.UTC(new Date(timelineStartMonth).getUTCFullYear(), new Date(timelineStartMonth).getUTCMonth() + offset, 1));
+    const year = date.getUTCFullYear();
+    const monthNumber = date.getUTCMonth() + 1;
+    const monthKey = year + '-' + String(monthNumber).padStart(2, '0');
+    const monthLabel = new Intl.DateTimeFormat('tr-TR', {month:'short', timeZone:'UTC'}).format(date).replace('.', '');
+    const monthData = months.get(monthKey) || {activeCount:0, workload:0, priorities:{1:0,2:0,3:0,4:0,5:0}, unrated:0, suspended:0, overdue:0, highestPriority:0};
+    const isPast = Date.UTC(year, monthNumber - 1, 1) < firstMonth;
+    const alpha = monthData.workload ? (0.16 + monthData.workload / maxWorkload * 0.64).toFixed(2) : '0.12';
+    const prioritySummary = Object.keys(monthData.priorities).filter(priority => monthData.priorities[priority]).map(priority => 'Ö' + priority + ' ' + monthData.priorities[priority]).join(' · ');
+    const title = monthLabel + ' ' + year + ' · ' + monthData.activeCount + ' aktif konu · ' + monthData.workload + ' yük puanı · ' + (prioritySummary || 'Önem puanı yok') + ' · Askıda ' + monthData.suspended;
+    monthCells.push('<div class="timeline-month' + (isPast ? ' timeline-past' : monthData.workload ? '' : ' timeline-empty') + '" style="--heat-color:' + priorityColors[monthData.highestPriority] + ';--heat-alpha:' + alpha + '" title="' + escapeHtml(title) + '"><span class="timeline-month-name">' + escapeHtml(monthLabel) + '</span><strong>' + (isPast ? '—' : monthData.workload) + '</strong><small>' + (isPast ? 'Geçmiş' : monthData.activeCount + ' konu') + '</small></div>');
+  }
+  const todayOffset = (now.getFullYear() - new Date(timelineStartMonth).getUTCFullYear()) * 12 + now.getMonth() - new Date(timelineStartMonth).getUTCMonth() + (now.getDate() - 1) / new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const todayPosition = Math.max(0, Math.min(100, todayOffset / monthCount * 100));
+  const start = new Intl.DateTimeFormat('tr-TR', {month:'long', year:'numeric', timeZone:'UTC'}).format(new Date(firstMonth));
+  const end = new Intl.DateTimeFormat('tr-TR', {month:'long', year:'numeric', timeZone:'UTC'}).format(new Date(lastMonth));
+  const legend = [1,2,3,4,5].map(priority => '<span><i style="--legend-color:rgb(' + priorityColors[priority] + ')"></i>Önem ' + priority + '</span>').join('');
+  return '<section class="density-calendar"><div class="density-heading"><div><h3>İş Yükü Zaman Çizelgesi</h3><p>' + escapeHtml(start) + ' – ' + escapeHtml(end) + '</p></div><span>Yatay eksen aylardır. Renk önem derecesini ve aylık yük yoğunluğunu gösterir; kırmızı çizgi bugünü belirtir.</span></div><div class="timeline-viewport"><div class="timeline-chart" style="--month-count:' + monthCount + ';--today-position:' + todayPosition + '%"><div class="timeline-year-row">' + yearBands.join('') + '</div><div class="timeline-month-row">' + monthCells.join('') + '<span class="timeline-today" title="Bugün"></span></div></div></div><div class="density-legend">' + legend + '<span><b>Ay hücresindeki sayı</b> aylık yük puanıdır</span></div>' + (undatedCount ? '<p class="density-unplanned">Planlı tarihi olmayan açık konu bu tahmine dahil değil: ' + undatedCount + '</p>' : '') + '</section>';
+}
+
+function render() {
+  try {
+    document.getElementById('toolbar').classList.add('show');
+    document.getElementById('cards').classList.add('show');
+    document.getElementById('table').classList.add('show');
+
+    document.querySelectorAll('[data-filter]').forEach(c => {
+      c.onclick = function() {
+        document.querySelectorAll('[data-filter]').forEach(x => x.classList.remove('active'));
+        c.classList.add('active');
+        filterState = c.dataset.filter;
+        renderTable();
+      };
+    });
+
+    document.querySelectorAll('[data-priority]').forEach(c => {
+      c.onclick = function() {
+        document.querySelectorAll('[data-priority]').forEach(x => x.classList.remove('active'));
+        c.classList.add('active');
+        priorityFilter = c.dataset.priority;
+        renderTable();
+      };
+    });
+
+    document.getElementById('searchBox').oninput = function() {
+      renderTable();
+    };
+    ['service', 'topicType', 'closingDate'].forEach(field => {
+      document.getElementById(field + 'Filter').onchange = function() {
+        columnFilters[field] = this.value;
+        renderTable();
+      };
+    });
+
+    renderTable();
+    Logger.log('INFO', 'UI rendered successfully');
+  } catch(err) {
+    AlertUI.error('Arayüz yüklenirken hata: ' + err.message);
+    Logger.log('ERROR', 'Render error', err);
+  }
+}
+
+function getFiltered() {
+  const q = norm(document.getElementById('searchBox').value);
+  return rows.filter(r => {
+    const st = classifyStatus(r.status);
+    const pr = classifyPriority(r.priority);
+    if(filterState !== 'all' && st.key !== filterState) return false;
+    if(priorityFilter !== 'all-priority' && pr.key !== priorityFilter) return false;
+    if(sheetState !== 'all' && r.sheet !== sheetState) return false;
+    if(columnFilters.service !== 'all' && !splitServices(r.service).some(service => norm(service) === norm(columnFilters.service))) return false;
+    if(columnFilters.topicType !== 'all' && norm(r.topicType) !== norm(columnFilters.topicType)) return false;
+    if(columnFilters.closingDate !== 'all' && r.closingDate !== columnFilters.closingDate) return false;
+    if(q && !norm(r.topic).includes(q)) return false;
+    return true;
+  });
+}
+
+function renderTable() {
+  try {
+    const filtered = getFiltered();
+    const counts = {active:0, closed:0, suspended:0};
+    
+    filtered.forEach(r => {
+      const key = classifyStatus(r.status).key;
+      if(counts[key] !== undefined) counts[key]++;
+    });
+
+    const cardsHtml = 
+      '<div class="card total"><div class="n">' + filtered.length + '</div><div class="l">Toplam Konu</div></div>' +
+      '<div class="card progress"><div class="n">' + counts.active + '</div><div class="l">Aktif</div></div>' +
+      '<div class="card done"><div class="n">' + counts.closed + '</div><div class="l">Kapandı</div></div>' +
+      '<div class="card pending"><div class="n">' + counts.suspended + '</div><div class="l">Askıda</div></div>';
+
+    document.getElementById('cards').innerHTML = cardsHtml;
+
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = '';
+    document.getElementById('emptyMsg').classList.toggle('show', filtered.length === 0);
+    document.getElementById('table').classList.toggle('show', filtered.length > 0);
+
+    filtered.forEach(r => {
+      const st = classifyStatus(r.status);
+      const pr = classifyPriority(r.priority);
+      const isNew = newTopicIds.has(r.sheet + '|' + norm(r.topic));
+      
+      const weeklyHtml = renderWeeklyUpdates(r.weekly);
+      
+      const tr = document.createElement('tr');
+      if(isNew) tr.classList.add('new-item');
+      
+      const tdHtml = 
+        '<td class="sheet-tag">' + escapeHtml(r.sheet) + '</td>' +
+        '<td class="topic">' + escapeHtml(r.topic) + (isNew ? '<span class="new-badge">YENİ</span>' : '') + '</td>' +
+        '<td class="note">' + escapeHtml(r.service || '—') + '</td>' +
+        '<td class="note">' + escapeHtml(r.topicType || '—') + '</td>' +
+        '<td class="note">' + escapeHtml(r.closingDate || '—') + '</td>' +
+        '<td class="' + pr.cls + '">' + escapeHtml(pr.label) + '</td>' +
+        '<td><span class="badge ' + st.cls + '">' + escapeHtml(st.label) + '</span></td>' +
+        '<td class="note">' + renderCurrentComparison(r.current, r.weekly) + '</td>' +
+        '<td class="note">' + weeklyHtml + '</td>';
+      
+      tr.innerHTML = tdHtml;
+      tbody.appendChild(tr);
+    });
+    
+    Logger.log('INFO', 'Table rendered', {rows: filtered.length});
+  } catch(err) {
+    AlertUI.error('Tablo yüklenirken hata: ' + err.message);
+    Logger.log('ERROR', 'renderTable error', err);
+  }
+}
+
+function escapeHtml(s) {
+  const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+  return String(s).replace(/[&<>"']/g, c => map[c]);
+}
+
+function downloadReportLegacy2(downloadAll) {
+  try {
+    const filtered = downloadAll ? rows : getFiltered();
+    if(filtered.length === 0) {
+      AlertUI.warning('İndirilecek konu yok');
+      return;
+    }
+    
+    const dateStr = new Date().toLocaleDateString('tr-TR', {day:'2-digit', month:'long', year:'numeric'});
+    const bySheet = {};
+    filtered.forEach(r => {
+      if(!bySheet[r.sheet]) bySheet[r.sheet] = [];
+      bySheet[r.sheet].push(r);
+    });
+
+    const counts = {done:0, progress:0, pending:0};
+    filtered.forEach(r => {
+      const key = classifyStatus(r.status).key;
+      if(key === 'done') counts.done++;
+      else if(key === 'progress') counts.progress++;
+      else if(key === 'pending') counts.pending++;
+    });
+
+    const sectionHtml = Object.keys(bySheet).map(sheetName => {
+      const sheetRows = bySheet[sheetName];
+      const rowsHtml = sheetRows.map(r => {
+        const st = classifyStatus(r.status);
+        const pr = classifyPriority(r.priority);
+        const weeklyHtml = r.weekly.length ? r.weekly.map(w => 
+          '<div style="margin-bottom:6px"><b>' + escapeHtml(w.label) + ':</b> ' + escapeHtml(w.val) + '</div>'
+        ).join('') : '<span style="color:#767b8a">—</span>';
+        
+        return '<tr><td class="topic">' + escapeHtml(r.topic) + '</td><td class="' + pr.cls + '">' + escapeHtml(pr.label) + '</td><td><span class="badge ' + st.cls + '">' + escapeHtml(st.label) + '</span></td><td class="note">' + (r.current ? escapeHtml(r.current) : '<span style="color:#767b8a">—</span>') + '</td><td class="note">' + weeklyHtml + '</td></tr>';
+      }).join('');
+      return '<h2>' + escapeHtml(sheetName) + '</h2><table><thead><tr><th>Konu</th><th>Önem</th><th>Durum</th><th>Güncel Durum</th><th>Haftalık Güncellemeler</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>';
+    }).join('');
+
+    const html = '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Haftalık İş Takip Raporu</title><style>body{font-family:-apple-system,Segoe UI,Arial;color:#1a1c22;background:#fff;max-width:1000px;margin:40px auto;padding:0 28px;line-height:1.6}h1{font-size:28px;font-weight:700}h2{font-size:16px;font-weight:700;margin:28px 0 14px;border-bottom:2px solid #1a1c22;padding-bottom:8px}.meta{color:#767b8a;font-size:14px;margin-bottom:28px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:40px}.card{border:1px solid #e2e4e9;border-radius:12px;padding:18px;text-align:center;background:#f5f6f8}.card .n{font-size:26px;font-weight:700}.card .l{font-size:11px;color:#767b8a;margin-top:4px;font-weight:600}table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:20px}thead{background:#f0f4f9}th{text-align:left;font-size:12px;text-transform:uppercase;color:#505866;padding:12px 14px;border-bottom:1px solid #e2e4e9;font-weight:700}td{padding:14px;border-bottom:1px solid #f0f1f4;font-size:13px}.topic{font-weight:700}.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}.b-done{background:#e3f9ef;color:#1e9e6a}.b-progress{background:#eaf1fd;color:#3968c7}.b-pending{background:#fdf1e0;color:#b3781f}.p-high{color:#c94141;font-weight:700}.p-med{color:#b3781f;font-weight:700}.p-low{color:#1e9e6a;font-weight:700}.p-none{color:#9aa0ac}.note{color:#4a4e58;font-size:13px;line-height:1.5}</style></head><body><h1>Haftalık İş Takip Raporu</h1><div class="meta">📅 ' + dateStr + '</div><div class="cards"><div class="card"><div class="n">' + filtered.length + '</div><div class="l">Toplam Konu</div></div><div class="card"><div class="n">' + counts.done + '</div><div class="l">Tamamlanan</div></div><div class="card"><div class="n">' + counts.progress + '</div><div class="l">Devam Eden</div></div><div class="card"><div class="n">' + counts.pending + '</div><div class="l">Bekleyen</div></div></div>' + sectionHtml + '<div class="meta" style="margin-top:40px;border-top:1px solid #e2e4e9;padding-top:20px">📄 Rapor ' + dateStr + ' tarihinde oluşturulmuştur. Konu Takibi Sistemi</div></body></html>';
+
+    const blob = new Blob([html], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const suffix = downloadAll ? 'tumkonular' : 'filtreli';
+    a.download = sourceFileName + '-rapor-' + suffix + '-' + new Date().toISOString().slice(0,10) + '.html';
+    a.click();
+    URL.revokeObjectURL(url);
+    
+
+  function downloadReport(downloadAll) {
+    try {
+      const selectedRows = downloadAll ? rows : getFiltered();
+      if(!selectedRows.length) {
+        AlertUI.warning('İndirilecek konu bulunamadı');
+        return;
+      }
+      const sheets = [...new Set(selectedRows.map(r => r.sheet))];
+      const tabs = sheets.map((sheet, index) => '<button class="tab' + (index === 0 ? ' active' : '') + '" data-sheet="sheet-' + index + '">' + escapeHtml(sheet) + '</button>').join('');
+      const panels = sheets.map((sheet, index) => {
+        const sheetRows = selectedRows.filter(r => r.sheet === sheet);
+        const body = sheetRows.map(r => {
+          const status = classifyStatus(r.status);
+          const priority = classifyPriority(r.priority);
+          const weekly = r.weekly.length ? r.weekly.map(w => '<div><b>' + escapeHtml(w.label) + ':</b> ' + escapeHtml(w.val) + '</div>').join('') : '—';
+          return '<tr><td class="topic">' + escapeHtml(r.topic) + '</td><td class="' + priority.cls + '">' + escapeHtml(priority.label) + '</td><td><span class="badge ' + status.cls + '">' + status.label + '</span></td><td>' + (r.current ? escapeHtml(r.current) : '—') + '</td><td>' + weekly + '</td></tr>';
+        }).join('');
+        return '<section class="panel' + (index === 0 ? ' active' : '') + '" id="sheet-' + index + '"><h2>' + escapeHtml(sheet) + '<small>' + sheetRows.length + ' konu</small></h2><div class="table-wrap"><table><thead><tr><th>Konu</th><th>Önem</th><th>Durum</th><th>Güncel Durum</th><th>Haftalık Güncellemeler</th></tr></thead><tbody>' + body + '</tbody></table></div></section>';
+      }).join('');
+      const reportHtml = '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Haftalık İş Takip Raporu</title><style>body{margin:0;background:#f4f6f8;color:#17202a;font:14px Segoe UI,Arial,sans-serif}.shell{max-width:1200px;margin:0 auto;padding:32px 24px}header{background:#123b5d;color:#fff;padding:28px 32px;border-radius:12px;margin-bottom:18px}h1{margin:0 0 4px;font-size:28px}header p{margin:0;color:#c9d8e5}.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:6px;background:#fff;border:1px solid #dce2e8;border-radius:10px;margin-bottom:16px}.tab{border:0;background:transparent;color:#52606d;padding:10px 16px;border-radius:7px;font-weight:600;cursor:pointer}.tab.active{background:#1769aa;color:#fff}.panel{display:none}.panel.active{display:block}h2{display:flex;justify-content:space-between;align-items:center;margin:0 0 12px;color:#123b5d}h2 small{font-size:12px;color:#697783;font-weight:500}.table-wrap{overflow:auto;background:#fff;border:1px solid #dce2e8;border-radius:10px}table{width:100%;min-width:760px;border-collapse:collapse}th{text-align:left;padding:12px;background:#eaf0f5;color:#365064;font-size:11px;text-transform:uppercase}td{padding:13px;border-top:1px solid #edf0f2;vertical-align:top}.topic{font-weight:700}.badge{display:inline-block;padding:4px 9px;border-radius:14px;font-weight:600}.b-active{background:#e7f0fb;color:#1769aa}.b-closed{background:#e4f7ed;color:#188457}.b-suspended{background:#fff1d9;color:#a56800}.p-1,.p-2{color:#188457;font-weight:700}.p-3{color:#a56800;font-weight:700}.p-4,.p-5{color:#b43a3a;font-weight:700}@media(max-width:700px){.shell{padding:16px}header{padding:22px}.tabs{overflow-x:auto;flex-wrap:nowrap}.tab{white-space:nowrap}}</style></head><body><main class="shell"><header><h1> Haftalık İş Takip Raporu</h1><p>' + new Date().toLocaleDateString('tr-TR') + ' · ' + selectedRows.length + ' konu · ' + sheets.length + ' sheet</p></header><nav class="tabs" aria-label="Sheet seçimi">' + tabs + '</nav>' + panels + '</main><script>document.querySelectorAll(".tab").forEach(function(tab){tab.onclick=function(){document.querySelectorAll(".tab,.panel").forEach(function(el){el.classList.remove("active")});tab.classList.add("active");document.getElementById(tab.dataset.sheet).classList.add("active")}});<\/script></body></html>';
+      const url = URL.createObjectURL(new Blob([reportHtml], {type:'text/html'}));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = sourceFileName + '-rapor-' + (downloadAll ? 'tum-sheetler' : 'filtreli') + '-' + new Date().toISOString().slice(0,10) + '.html';
+      link.click();
+      URL.revokeObjectURL(url);
+      AlertUI.success('Sheet sekmeli rapor indirildi');
+    } catch(err) {
+      AlertUI.error('Rapor oluşturulamadı: ' + err.message);
+      Logger.log('ERROR', 'Tabbed export error', err);
+    }
+  }
+    AlertUI.success('Rapor indirildi');
+    Logger.log('SUCCESS', 'Report downloaded', {rows: filtered.length, mode: downloadAll ? 'all' : 'filtered'});
+  } catch(err) {
+    AlertUI.error('Rapor indirilirken hata: ' + err.message);
+    Logger.log('ERROR', 'Download report error', err);
+  }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  ThemeManager.init();
+  KeyboardNav.init();
+  AlertUI.info('Hazır. Lütfen Excel dosyası yükleyin');
+  loadV3Report();
+});
+
+function downloadReportLegacy(downloadAll) {
+  const filtered = downloadAll ? rows : getFiltered();
+  const dateStr = new Date().toLocaleDateString('tr-TR', {day:'2-digit', month:'long', year:'numeric'});
+
+  const bySheet = {};
+  filtered.forEach(r => {
+    if(!bySheet[r.sheet]) bySheet[r.sheet] = [];
+    bySheet[r.sheet].push(r);
+  });
+
+  const counts = {done:0, progress:0, pending:0};
+  filtered.forEach(r => {
+    const key = classifyStatus(r.status).key;
+    if(key === 'done') counts.done++;
+    else if(key === 'progress') counts.progress++;
+    else if(key === 'pending') counts.pending++;
+  });
+
+  const sectionHtml = Object.keys(bySheet).map(sheetName => {
+    const sheetRows = bySheet[sheetName];
+    const rowsHtml = sheetRows.map(r => {
+      const st = classifyStatus(r.status);
+      const pr = classifyPriority(r.priority);
+      const weeklyHtml = r.weekly.length ? r.weekly.map(w => 
+        '<div style="margin-bottom:6px"><b>' + escapeHtml(w.label) + ':</b> ' + escapeHtml(w.val) + '</div>'
+      ).join('') : '<span style="color:#767b8a">—</span>';
+      
+      return '<tr><td class="topic">' + escapeHtml(r.topic) + '</td><td class="' + pr.cls + '">' + escapeHtml(pr.label) + '</td><td><span class="badge ' + st.cls + '">' + escapeHtml(st.label) + '</span></td><td class="note">' + (r.current ? escapeHtml(r.current) : '<span style="color:#767b8a">—</span>') + '</td><td class="note">' + weeklyHtml + '</td></tr>';
+    }).join('');
+
+    return '<h2>' + escapeHtml(sheetName) + '</h2><table><thead><tr><th>Konu</th><th>Önem</th><th>Durum</th><th>Güncel Durum</th><th>Haftalık Güncellemeler</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>';
+  }).join('');
+
+  const html = '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Haftalık İş Takip Raporu</title><style>body{font-family:-apple-system,Segoe UI,Arial;color:#1a1c22;background:#fff;max-width:1000px;margin:40px auto;padding:0 28px;line-height:1.6}h1{font-size:28px;font-weight:700}h2{font-size:16px;font-weight:700;margin:28px 0 14px;border-bottom:2px solid #1a1c22;padding-bottom:8px}.meta{color:#767b8a;font-size:14px;margin-bottom:28px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:40px}.card{border:1px solid #e2e4e9;border-radius:12px;padding:18px;text-align:center;background:#f5f6f8}.card .n{font-size:26px;font-weight:700}.card .l{font-size:11px;color:#767b8a;margin-top:4px;font-weight:600}table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:20px}thead{background:#f0f4f9}th{text-align:left;font-size:12px;text-transform:uppercase;color:#505866;padding:12px 14px;border-bottom:1px solid #e2e4e9;font-weight:700}td{padding:14px;border-bottom:1px solid #f0f1f4;font-size:13px}.topic{font-weight:700}.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}.b-done{background:#e3f9ef;color:#1e9e6a}.b-progress{background:#eaf1fd;color:#3968c7}.b-pending{background:#fdf1e0;color:#b3781f}.p-high{color:#c94141;font-weight:700}.p-med{color:#b3781f;font-weight:700}.p-low{color:#1e9e6a;font-weight:700}.p-none{color:#9aa0ac}.note{color:#4a4e58;font-size:13px;line-height:1.5}</style></head><body><h1>Haftalık İş Takip Raporu</h1><div class="meta">📅 ' + dateStr + '</div><div class="cards"><div class="card"><div class="n">' + filtered.length + '</div><div class="l">Toplam Konu</div></div><div class="card"><div class="n">' + counts.done + '</div><div class="l">Tamamlanan</div></div><div class="card"><div class="n">' + counts.progress + '</div><div class="l">Devam Eden</div></div><div class="card"><div class="n">' + counts.pending + '</div><div class="l">Bekleyen</div></div></div>' + sectionHtml + '</body></html>';
+
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const suffix = downloadAll ? 'tumkonular' : 'filtreli';
+  a.download = sourceFileName + '-rapor-' + suffix + '-' + new Date().toISOString().slice(0,10) + '.html';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function downloadReport(downloadAll) {
+  try {
+    const selectedRows = downloadAll ? rows : getFiltered();
+    if(!selectedRows.length) {
+      AlertUI.warning('İndirilecek konu bulunamadı');
+      return;
+    }
+
+    const date = new Date().toLocaleDateString('tr-TR', {day:'2-digit', month:'long', year:'numeric'});
+    const sheets = [...new Set(selectedRows.map(row => row.sheet))];
+    const statusCounts = {active:0, closed:0, suspended:0};
+    selectedRows.forEach(row => statusCounts[classifyStatus(row.status).key]++);
+
+    const sheetTabs = sheets.map((sheet, index) =>
+      '<button class="sheet-tab' + (index === 0 ? ' active' : '') + '" data-target="sheet-' + index + '">' + escapeHtml(sheet) + '<span>' + selectedRows.filter(row => row.sheet === sheet).length + '</span></button>'
+    ).join('');
+
+    const sheetPanels = sheets.map((sheet, index) => {
+      const sheetRows = selectedRows.filter(row => row.sheet === sheet);
+      const tableRows = sheetRows.map(row => {
+        const status = classifyStatus(row.status);
+        const priority = classifyPriority(row.priority);
+        const weekly = renderWeeklyUpdates(row.weekly);
+        const isNew = newTopicIds.has(row.sheet + '|' + norm(row.topic));
+        return '<tr data-topic="' + escapeHtml(norm(row.topic)) + '" data-status="' + status.key + '" data-priority="' + priority.key + '"><td class="topic">' + escapeHtml(row.topic) + (isNew ? '<span class="new">YENİ</span>' : '') + '</td><td>' + escapeHtml(row.service || '—') + '</td><td>' + escapeHtml(row.topicType || '—') + '</td><td>' + escapeHtml(row.closingDate || '—') + '</td><td class="' + priority.cls + '">' + escapeHtml(priority.label) + '</td><td><span class="badge ' + status.cls + '">' + status.label + '</span></td><td>' + renderCurrentComparison(row.current, row.weekly) + '</td><td class="notes">' + weekly + '</td></tr>';
+      }).join('');
+      return '<section class="sheet-panel' + (index === 0 ? ' active' : '') + '" id="sheet-' + index + '"><div class="section-heading"><div><div class="eyebrow">SHEET ' + String(index + 1).padStart(2, '0') + '</div><h2>' + escapeHtml(sheet) + '</h2></div><span class="result-count">' + sheetRows.length + ' konu</span></div><div class="table-wrap"><table class="report-table"><colgroup><col class="topic-col"><col class="service-col"><col class="type-col"><col class="closing-col"><col class="priority-col"><col class="status-col"><col class="current-col"><col class="weekly-col"></colgroup><thead><tr><th>Konu</th><th>Etkilenen Servis</th><th>Konu Tipi</th><th>Planlanan Kapanış Tarihi</th><th>Önem</th><th>Durum</th><th>Güncel Durum (Son Hafta)</th><th>Haftalık Güncellemeler</th></tr></thead><tbody>' + tableRows + '</tbody></table><div class="no-match">Bu filtrelerle eşleşen konu yok.</div></div>' + closingDensityMarkup(sheetRows) + '</section>';
+    }).join('');
+
+    const reportHtml = '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Haftalık İş Takip Raporu - ' + date + '</title><style>:root{--navy:#123b5d;--blue:#1769aa;--ink:#17202a;--muted:#6b7785;--line:#dce3e9;--surface:#fff;--canvas:#f3f6f8}*{box-sizing:border-box}body{margin:0;background:var(--canvas);color:var(--ink);font:14px Segoe UI,Arial,sans-serif}.shell{max-width:1280px;margin:auto;padding:28px 24px 56px}.hero{background:var(--navy);color:#fff;padding:30px 34px;border-radius:12px;display:flex;justify-content:space-between;gap:24px;align-items:flex-end;box-shadow:0 8px 24px rgba(18,59,93,.18)}.eyebrow{font-size:11px;letter-spacing:.12em;font-weight:700;color:#6a9fc3}.hero .eyebrow{color:#a9cbe0}.hero h1{font-size:30px;margin:5px 0 8px}.hero p{margin:0;color:#c7d8e4}.hero-meta{text-align:right;color:#d7e5ee;line-height:1.8}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.metric{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:17px 18px}.metric strong{display:block;font-size:26px;color:var(--navy)}.metric span{color:var(--muted);font-size:12px;font-weight:600}.metric.active{border-top:3px solid #1769aa}.metric.closed{border-top:3px solid #188457}.metric.suspended{border-top:3px solid #a56800}.controls{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}.search{flex:1;min-width:220px;border:1px solid var(--line);border-radius:7px;padding:10px 12px;font:inherit}.filter{border:1px solid var(--line);border-radius:7px;background:#fff;padding:10px 12px;color:var(--ink);cursor:pointer}.filter.active{background:var(--blue);border-color:var(--blue);color:#fff}.print{margin-left:auto;border:0;border-radius:7px;background:var(--navy);color:#fff;padding:10px 14px;cursor:pointer;font-weight:600}.sheet-tabs{display:flex;gap:6px;overflow-x:auto;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:16px}.sheet-tab{border:0;background:transparent;color:#52606d;padding:10px 14px;border-radius:7px;white-space:nowrap;cursor:pointer;font-weight:600}.sheet-tab span{margin-left:8px;color:var(--muted);font-size:11px}.sheet-tab.active{background:var(--blue);color:#fff}.sheet-tab.active span{color:#dceeff}.sheet-panel{display:none}.sheet-panel.active{display:block}.section-heading{display:flex;justify-content:space-between;align-items:end;margin:4px 0 12px}.section-heading h2{margin:4px 0 0;color:var(--navy);font-size:22px}.result-count{color:var(--muted);font-size:12px;font-weight:600}.table-wrap{overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}table{width:100%;min-width:820px;border-collapse:collapse}th{text-align:left;background:#eaf1f5;color:#365064;padding:12px;font-size:11px;text-transform:uppercase;letter-spacing:.04em}td{padding:13px 12px;border-top:1px solid #edf1f3;vertical-align:top}.topic{font-weight:700;min-width:210px}.badge{display:inline-block;border-radius:14px;padding:4px 9px;font-weight:600;font-size:12px}.b-active{background:#e7f0fb;color:#1769aa}.b-closed{background:#e4f7ed;color:#188457}.b-suspended{background:#fff1d9;color:#a56800}.p-1,.p-2{color:#188457;font-weight:700}.p-3{color:#a56800;font-weight:700}.p-4,.p-5{color:#b43a3a;font-weight:700}.notes{color:#465560;line-height:1.55}.muted{color:var(--muted)}.new{display:inline-block;background:#b43a3a;color:#fff;border-radius:4px;padding:2px 6px;font-size:10px;margin-left:7px}.no-match{display:none;padding:30px;text-align:center;color:var(--muted)}tr.hidden{display:none}.sheet-panel.empty .no-match{display:block}.sheet-panel.empty table{display:none}@media(max-width:700px){.shell{padding:16px 12px 36px}.hero{display:block;padding:24px}.hero h1{font-size:24px}.hero-meta{text-align:left;margin-top:12px}.summary{grid-template-columns:repeat(2,1fr)}.print{margin-left:0;width:100%}}@media print{body{background:#fff}.shell{padding:0}.hero{box-shadow:none}.controls,.sheet-tabs{display:none}.sheet-panel{display:block!important;page-break-inside:avoid}.table-wrap{overflow:visible}.no-match{display:none!important}}</style></head><body><main class="shell"><header class="hero"><div><div class="eyebrow"></div><h1>Haftalık İş Takip Raporu</h1><p></p></div><div class="hero-meta"><b>' + date + '</b><br>' + selectedRows.length + ' konu · ' + sheets.length + ' sheet</div></header><section class="summary"><div class="metric"><strong>' + selectedRows.length + '</strong><span>TOPLAM KONU</span></div><div class="metric active"><strong>' + statusCounts.active + '</strong><span>AKTİF</span></div><div class="metric closed"><strong>' + statusCounts.closed + '</strong><span>KAPANDI</span></div><div class="metric suspended"><strong>' + statusCounts.suspended + '</strong><span>ASKIDA</span></div></section><section class="controls"><input id="search" class="search" placeholder="Konu, not veya güncel durum ara..." aria-label="Rapor içinde ara"><button class="filter active" data-status="all">Tümü</button><button class="filter" data-status="active">Aktif</button><button class="filter" data-status="closed">Kapandı</button><button class="filter" data-status="suspended">Askıda</button><select id="priority" class="filter" aria-label="Önem filtresi"><option value="all">Tüm önemler</option><option value="p5">Önem 5 - En yüksek</option><option value="p4">Önem 4</option><option value="p3">Önem 3</option><option value="p2">Önem 2</option><option value="p1">Önem 1 - En düşük</option></select><button class="print" onclick="window.print()">Yazdır / PDF</button></section><nav class="sheet-tabs" aria-label="Sheet navigasyonu">' + sheetTabs + '</nav>' + sheetPanels + '</main><script>var activeStatus="all";var search=document.getElementById("search");var priority=document.getElementById("priority");function applyFilters(){var query=search.value.toLocaleLowerCase("tr-TR").trim();document.querySelectorAll(".sheet-panel").forEach(function(panel){var visible=0;panel.querySelectorAll("tbody tr").forEach(function(row){var text=row.textContent.toLocaleLowerCase("tr-TR");var show=(!query||text.indexOf(query)>-1)&&(activeStatus==="all"||row.dataset.status===activeStatus)&&(priority.value==="all"||row.dataset.priority===priority.value);row.classList.toggle("hidden",!show);if(show)visible++});panel.classList.toggle("empty",visible===0);var count=panel.querySelector(".result-count");if(count)count.textContent=visible+" konu"})}document.querySelectorAll(".filter[data-status]").forEach(function(button){button.onclick=function(){document.querySelectorAll(".filter[data-status]").forEach(function(item){item.classList.remove("active")});button.classList.add("active");activeStatus=button.dataset.status;applyFilters()}});search.oninput=applyFilters;priority.onchange=applyFilters;document.querySelectorAll(".sheet-tab").forEach(function(tab){tab.onclick=function(){document.querySelectorAll(".sheet-tab,.sheet-panel").forEach(function(item){item.classList.remove("active")});tab.classList.add("active");document.getElementById(tab.dataset.target).classList.add("active");applyFilters()}});<\/script></body></html>';
+    const reportEnhancementScript = `<script>(function(){var selectedFilters={};var filterColumns=[1,2,3];var tables=Array.prototype.slice.call(document.querySelectorAll(".report-table"));function normalize(value){return String(value||"").toLocaleLowerCase("tr-TR").trim()}function cellValue(cell){var clone=cell.cloneNode(true);clone.querySelectorAll(".new").forEach(function(item){item.remove()});return clone.textContent.trim()}var values={1:new Map(),2:new Map(),3:new Map()};tables.forEach(function(table){table.querySelectorAll("tbody tr").forEach(function(row){filterColumns.forEach(function(index){if(!row.cells[index])return;var cell=cellValue(row.cells[index]);var options=index===1?cell.split(",").map(function(value){return value.trim()}).filter(Boolean):[cell];options.forEach(function(value){if(value&&value!=="—"&&!values[index].has(normalize(value)))values[index].set(normalize(value),value)})})})});function applyFilters(){var search=document.getElementById("search");var priority=document.getElementById("priority");var query=search?normalize(search.value):"";document.querySelectorAll(".sheet-panel").forEach(function(panel){var visible=0;panel.querySelectorAll("tbody tr").forEach(function(row){var text=normalize(row.textContent);var show=(!query||text.indexOf(query)>-1)&&((window.activeStatus||"all")==="all"||row.dataset.status===window.activeStatus)&&(!priority||priority.value==="all"||row.dataset.priority===priority.value);filterColumns.forEach(function(index){var selected=selectedFilters[index];if(!selected||!show)return;var cell=row.cells[index]?cellValue(row.cells[index]):"";if(index===1)show=cell.split(",").some(function(value){return normalize(value)===normalize(selected)});else show=normalize(cell)===normalize(selected)});row.classList.toggle("hidden",!show);if(show)visible++});panel.classList.toggle("empty",visible===0);var count=panel.querySelector(".result-count");if(count)count.textContent=visible+" konu"})}window.applyFilters=applyFilters;tables.forEach(function(table){var headers=table.querySelectorAll("thead th");filterColumns.forEach(function(index){var header=headers[index];if(!header)return;var select=document.createElement("select");select.className="column-filter";select.dataset.columnFilter=String(index);select.setAttribute("aria-label",header.childNodes[0].textContent.trim()+" filtresi");var all=document.createElement("option");all.value="";all.textContent="Tümü";select.appendChild(all);Array.from(values[index].values()).sort(function(a,b){return a.localeCompare(b,"tr")}).forEach(function(value){var option=document.createElement("option");option.value=value;option.textContent=value;select.appendChild(option)});select.addEventListener("change",function(){selectedFilters[index]=select.value;document.querySelectorAll('select[data-column-filter="'+index+'"]').forEach(function(item){item.value=select.value});applyFilters()});header.appendChild(select)})});document.querySelectorAll(".density-day[data-date]").forEach(function(day){day.addEventListener("click",function(){var select=document.querySelector('select[data-column-filter="3"]');if(!select)return;select.value=day.dataset.date;select.dispatchEvent(new Event("change",{bubbles:true}))})});applyFilters()})();<\/script>`;
+    const reportEnhancementCss = '<style>.table-wrap{overflow:visible!important}.report-table{width:100%!important;min-width:0!important;table-layout:fixed}.report-table .topic{min-width:0!important}.report-table th,.report-table td{padding:9px 7px;overflow-wrap:anywhere;word-break:normal}.report-table th{vertical-align:top}.column-filter{display:block;width:100%;min-width:0;max-width:100%;margin-top:6px;padding:5px 3px;border:1px solid #cbd5dc;border-radius:5px;background:#fff;color:#334e62;font:inherit;font-size:10px}.density-calendar{margin-top:18px;padding:16px;background:#fff;border:1px solid #dce3e9;border-radius:10px}.density-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px}.density-heading h3,.density-month h4{margin:0;color:#123b5d}.density-heading span,.calendar-empty{color:#6b7785;font-size:12px}.density-months{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.density-month{padding:12px;border:1px solid #e4e9ed;border-radius:7px}.density-month h4{text-transform:capitalize;font-size:14px;margin-bottom:10px}.density-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}.density-weekday{text-align:center;color:#6b7785;font-size:10px;font-weight:600;padding:4px 0}.density-day,.density-blank{min-width:0;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border:0;border-radius:4px;font:inherit;font-size:11px}.density-day{color:#334e62;background:#f3f6f8}.density-day.density-empty{color:#a0aab2}.density-day[class*="density-level"]{cursor:pointer;color:#123b5d}.density-level-1{background:#dceef7}.density-level-2{background:#a9d7e9}.density-level-3{background:#65b5d0}.density-level-4{background:#2188aa;color:#fff!important}.density-day b{font-size:9px}.density-day:hover{outline:2px solid #123b5d;outline-offset:1px}@media(max-width:700px){.density-heading{display:block}.density-heading span{display:block;margin-top:4px}.report-table th,.report-table td{padding:5px 3px;font-size:10px}.column-filter{font-size:9px}}@media print{.column-filter{display:none!important}.density-calendar{break-inside:avoid}.density-months{grid-template-columns:repeat(3,1fr)}.density-day,.density-blank{aspect-ratio:auto;min-height:6mm}}</style>';
+    const reportWeeklyCss = '<style>.weekly-history{min-width:0!important;max-width:100%!important;width:100%!important}</style>';
+    const columnFilterLayoutCss = '<style>.column-filter-label{display:flex;height:28px;align-items:flex-start;line-height:14px;overflow:hidden}.report-table th .column-filter{height:28px;margin-top:6px;padding-top:4px;padding-bottom:4px}</style>';
+    const densityHeatmapCss = '<style>.density-calendar{margin-top:18px;padding:16px;background:#fff;border:1px solid #dce3e9;border-radius:10px}.density-heading{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:12px}.density-heading h3{margin:0;color:#123b5d}.density-heading p{margin:4px 0 0;color:#6b7785;font-size:12px}.density-heading>span{max-width:320px;color:#6b7785;font-size:12px}.density-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.density-weekday{padding:5px;text-align:center;color:#6b7785;font-size:11px;font-weight:700}.density-day,.density-blank{position:relative;display:flex;min-width:0;min-height:54px;flex-direction:column;align-items:center;justify-content:center;border:1px solid #e5ebef;border-radius:5px;background:#f7f9fa;color:#334e62;font:inherit}.density-day.density-empty{color:#98a4ad}.density-day.density-active{cursor:pointer;background:rgba(var(--heat-color),var(--heat-alpha));border-color:rgba(var(--heat-color),.65)}.density-day.density-active:hover{outline:2px solid #123b5d;outline-offset:1px}.density-day>span{font-size:14px}.density-day>b{font-size:13px}.density-month-label{position:absolute;left:3px;top:2px;color:#52606d;font-size:9px;text-transform:capitalize}.density-priority{position:absolute;right:3px;top:2px;color:#334e62;font-size:9px;font-weight:700}.density-legend{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:12px;color:#52606d;font-size:11px}.density-legend span{display:flex;align-items:center;gap:5px}.density-legend i{width:12px;height:12px;border-radius:3px;background:var(--legend-color)}.density-legend b{color:#123b5d}@media(max-width:700px){.density-calendar{padding:10px}.density-heading{display:block}.density-heading>span{display:block;margin-top:5px}.density-day,.density-blank{min-height:40px}.density-day>span{font-size:12px}.density-day>b{font-size:11px}.density-month-label,.density-priority{font-size:8px}}</style>';
+    const monthlyHeatmapCss = '<style>.density-calendar{margin-top:18px;padding:16px;background:#fff;border:1px solid #dce3e9;border-radius:10px}.density-heading{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:12px}.density-heading h3{margin:0;color:#123b5d}.density-heading p{margin:4px 0 0;color:#6b7785;font-size:12px}.density-heading>span{max-width:320px;color:#6b7785;font-size:12px}.density-month-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.density-month-tile{display:flex;min-height:116px;flex-direction:column;gap:5px;padding:12px;border:1px solid rgba(var(--heat-color),.65);border-radius:7px;background:rgba(var(--heat-color),var(--heat-alpha));color:#243746}.density-month-tile strong{font-size:13px;text-transform:capitalize}.density-total{font-size:20px;font-weight:700}.density-priority-label{font-size:11px;font-weight:700}.density-priority-summary{color:#455968;font-size:11px}.density-no-items{background:#f5f7f8!important;border-color:#e1e6e9;color:#7a8790}.density-no-items .density-total{font-size:15px}.density-legend{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:12px;color:#52606d;font-size:11px}.density-legend span{display:flex;align-items:center;gap:5px}.density-legend i{width:12px;height:12px;border-radius:3px;background:var(--legend-color)}@media(max-width:700px){.density-calendar{padding:10px}.density-heading{display:block}.density-heading>span{display:block;margin-top:5px}.density-month-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.density-month-tile{min-height:100px;padding:9px}.density-total{font-size:17px}}</style>';
+    const annualCalendarCss = '<style>.density-years{display:grid;gap:18px}.density-year{padding:12px;border:1px solid #e4e9ed;border-radius:8px;background:#fbfcfd}.density-year>h4{margin:0 0 10px;color:#123b5d;font-size:18px}.density-year .density-month-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.density-past{min-height:116px;justify-content:center;background:#f0f2f3!important;border-color:#e1e6e9;color:#8b969d}.density-past-label{font-size:12px}@media(max-width:700px){.density-year{padding:8px}.density-year .density-month-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.density-past{min-height:100px}}</style>';
+    const projectAfterCss = '<style>.density-after-end{min-height:116px;justify-content:center;background:#f5f7f8!important;border-color:#e1e6e9;color:#9aa4aa}.density-after-end .density-past-label{font-size:12px}@media(max-width:700px){.density-after-end{min-height:100px}}</style>';
+    const timelineCss = '<style>.timeline-viewport{width:100%;overflow:hidden}.timeline-chart{position:relative;width:100%}.timeline-year-row,.timeline-month-row{display:grid;grid-template-columns:repeat(var(--month-count),minmax(0,1fr))}.timeline-year-row{height:30px}.timeline-year{display:flex;align-items:center;justify-content:center;min-width:0;background:var(--year-color);border-right:1px solid rgba(255,255,255,.35);color:#fff;font-size:12px;font-weight:700}.timeline-month-row{position:relative;border:1px solid #dce3e9;border-top:0;background:#fff}.timeline-month{display:flex;min-width:0;height:62px;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-right:1px solid #e5ebef;background:rgba(var(--heat-color),var(--heat-alpha));color:#203448;overflow:hidden}.timeline-month-name{max-width:100%;overflow:hidden;font-size:11px;text-overflow:clip;text-transform:capitalize}.timeline-month strong{font-size:14px;line-height:1}.timeline-month small{font-size:9px;white-space:nowrap}.timeline-past{background:#f0f2f3;color:#9aa4aa}.timeline-empty{color:#87939c}.timeline-today{position:absolute;z-index:2;top:-30px;bottom:0;left:var(--today-position);width:2px;transform:translateX(-1px);background:#e3323b;pointer-events:none}.timeline-today:before{position:absolute;top:0;left:-4px;width:0;height:0;border-top:8px solid #e3323b;border-right:5px solid transparent;border-left:5px solid transparent;content:""}.timeline-today:after{position:absolute;top:8px;left:-1px;width:4px;height:4px;border-radius:50%;background:#e3323b;content:""}.timeline-viewport+.density-legend{margin-top:10px}@media(max-width:700px){.timeline-viewport{overflow-x:auto}.timeline-chart{min-width:max(100%,calc(var(--month-count)*34px))}.timeline-month-name{font-size:10px}.timeline-month strong{font-size:12px}}</style>';
+    const timelineTodayCss = '<style>.timeline-today{top:0}</style>';
+    const printCss = '<style>@page{size:A4 portrait;margin:12mm 10mm 14mm}@media print{html,body{width:210mm;background:#fff}body{margin:0;font-size:9pt}.shell{width:190mm;max-width:none;padding:0;margin:0 auto}.hero{box-shadow:none;border-radius:0;padding:10mm 8mm;margin-bottom:5mm}.hero h1{font-size:20pt}.hero p,.hero-meta{font-size:9pt}.summary{grid-template-columns:repeat(4,1fr);gap:3mm;margin:0 0 5mm}.metric{padding:4mm 3mm;border-radius:0}.metric strong{font-size:16pt}.metric span{font-size:8pt}.controls,.sheet-tabs{display:none}.sheet-panel{display:block!important;page-break-inside:auto}.section-heading{margin:0 0 3mm}.section-heading h2{font-size:14pt}.table-wrap{overflow:visible;border-radius:0;border:1px solid #cbd5dc}.report-table{width:190mm;min-width:0;table-layout:fixed;font-size:8pt}.report-table .topic-col{width:20%}.report-table .priority-col{width:8%}.report-table .status-col{width:11%}.report-table .current-col{width:21%}.report-table .weekly-col{width:40%}thead{display:table-header-group}tr{page-break-inside:avoid;break-inside:avoid}th{padding:2.5mm 2mm;font-size:7pt}td{padding:2.5mm 2mm;overflow-wrap:anywhere} .weekly-history{min-width:0!important;max-width:none!important;width:100%!important}.weekly-history[open] .weekly-list{max-height:none;overflow:visible}.weekly-list{max-height:none;overflow:visible;padding-left:3mm}.weekly-item{padding:0 0 2mm 2mm}.weekly-label{font-size:7pt}.weekly-value{font-size:8pt;line-height:1.35}.no-match{display:none!important}}</style>';
+    const sheetPageBreakCss = '<style>@media print{.sheet-panel + .sheet-panel{break-before:page;page-break-before:always}}</style>';
+    const columnCss = '<style>.report-table .topic-col{width:16%}.report-table .service-col{width:11%}.report-table .type-col{width:8%}.report-table .closing-col{width:11%}.report-table .priority-col{width:6%}.report-table .status-col{width:8%}.report-table .current-col{width:17%}.report-table .weekly-col{width:23%}@media print{.report-table .topic-col{width:16%}.report-table .service-col{width:11%}.report-table .type-col{width:8%}.report-table .closing-col{width:11%}.report-table .priority-col{width:6%}.report-table .status-col{width:8%}.report-table .current-col{width:17%}.report-table .weekly-col{width:23%}}</style>';
+    const printColumnCss = '<style>@media print{.report-table .topic-col{width:16%!important}.report-table .service-col{width:11%!important}.report-table .type-col{width:8%!important}.report-table .closing-col{width:11%!important}.report-table .priority-col{width:6%!important}.report-table .status-col{width:8%!important}.report-table .current-col{width:17%!important}.report-table .weekly-col{width:23%!important}}</style>';
+    const scopedReportScript = reportEnhancementScript
+      .replace('var selectedFilters={};', 'var selectedFilters=new WeakMap();')
+      .replace('var selected=selectedFilters[index];', 'var selected=(selectedFilters.get(panel)||{})[index];')
+      .replace('select.setAttribute("aria-label",header.childNodes[0].textContent.trim()+" filtresi");', 'var headerTitle=header.childNodes[0].textContent.trim();var headerLabel=document.createElement("span");headerLabel.className="column-filter-label";headerLabel.textContent=headerTitle;header.replaceChild(headerLabel,header.childNodes[0]);select.setAttribute("aria-label",headerTitle+" filtresi");')
+      .replace('var headers=table.querySelectorAll("thead th");', 'var panel=table.closest(".sheet-panel");var localValues={1:new Map(),2:new Map(),3:new Map()};table.querySelectorAll("tbody tr").forEach(function(row){filterColumns.forEach(function(index){if(!row.cells[index])return;var cell=cellValue(row.cells[index]);var options=index===1?cell.split(",").map(function(value){return value.trim()}).filter(Boolean):[cell];options.forEach(function(value){if(value&&value!=="—"&&!localValues[index].has(normalize(value)))localValues[index].set(normalize(value),value)})})});var headers=table.querySelectorAll("thead th");')
+      .replace('Array.from(values[index].values())', 'Array.from(localValues[index].values())')
+      .replace('selectedFilters[index]=select.value;', 'var panelFilters=selectedFilters.get(panel)||{};panelFilters[index]=select.value;selectedFilters.set(panel,panelFilters);')
+      .replace(`document.querySelectorAll('select[data-column-filter="'+index+'"]')`, `panel.querySelectorAll('select[data-column-filter="'+index+'"]')`);
+    const reportWithFilters = reportHtml.replace('</body>', scopedReportScript + '</body>');
+    const printableReport = reportWithFilters.replace('</head>', columnCss + printCss + sheetPageBreakCss + printColumnCss + reportEnhancementCss + reportWeeklyCss + columnFilterLayoutCss + monthlyHeatmapCss + annualCalendarCss + projectAfterCss + timelineCss + timelineTodayCss + '</head>');
+    const url = URL.createObjectURL(new Blob([printableReport], {type:'text/html'}));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = sourceFileName + '-yonetici-raporu-' + new Date().toISOString().slice(0,10) + '.html';
+    link.click();
+    URL.revokeObjectURL(url);
+    AlertUI.success('Yönetici raporu indirildi');
+  } catch(err) {
+    AlertUI.error('Rapor oluşturulamadı: ' + err.message);
+    Logger.log('ERROR', 'Manager report export error', err);
+  }
+}
+function loadV3Report() {
+  const reportMode = new URLSearchParams(window.location.search).get('from');
+  if(reportMode !== 'v3-manager') return;
+  try {
+    const payload = JSON.parse(sessionStorage.getItem('weekly-report-v3-report') || 'null');
+    if(!payload || !Array.isArray(payload.sheets) || payload.sheets.length === 0) {
+      throw new Error('v3 arayüzünden rapor verisi bulunamadı. v3 ekranından yeniden açın.');
+    }
+    const workbook = XLSX.utils.book_new();
+    payload.sheets.forEach(sheet => {
+      if(!sheet || typeof sheet.name !== 'string' || !Array.isArray(sheet.data)) return;
+      const name = sheet.name.slice(0, 31);
+      if(!name || workbook.SheetNames.includes(name)) return;
+      workbook.SheetNames.push(name);
+      workbook.Sheets[name] = XLSX.utils.aoa_to_sheet(sheet.data);
+    });
+    if(workbook.SheetNames.length === 0) throw new Error('Rapor için geçerli Excel sayfası bulunamadı.');
+    sourceFileName = 'haftalik-rapor-v3';
+    parseWorkbook(workbook);
+    sessionStorage.removeItem('weekly-report-v3-report');
+    downloadReport(true);
+    AlertUI.success('v3 verileriyle yönetici HTML raporu oluşturuldu');
+  } catch(err) {
+    AlertUI.error('v3 rapor verisi yüklenemedi: ' + err.message);
+    Logger.log('ERROR', 'v3 report handoff error', err);
+  }
+}
+
+</script>
+</body>
+</html>

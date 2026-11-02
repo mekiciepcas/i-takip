@@ -1,0 +1,19 @@
+# Live application data and recovery material
+/veri/
+**/veri/
+**/yedekler/
+**/kurtarma/
+*.db
+*.db-shm
+*.db-wal
+*.partial
+
+# Local archives, packaged binaries, and build outputs
+*.zip
+*.exe
+**/__pycache__/
+*.py[cod]
+**/build/
+**/dist/
+/gelistirme/
+/IsTakip-Yeni-Surum/

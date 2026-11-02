@@ -1,0 +1,1628 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>İş Takip | Ortak Ağ Klasörü</title>
+  <script src="../assets/xlsx.full.min.js"></script>
+  <style>
+    :root{
+      --tt-navy:#002855;--tt-blue:#0082CA;--tt-cyan:#05BEC8;--tt-red:#E63323;
+      --tt-lime:#CEDC00;--tt-green:#4CAF50;--tt-white:#FFFFFF;--tt-bg:#F4F6F9;--tt-text:#1C2833;
+      --tt-muted:#5B6B7A;--tt-line:#E3E8EE;--tt-shadow:0 8px 24px rgba(0,40,85,.08);
+      font-family:"Segoe UI Variable","Segoe UI",Arial,sans-serif;color:var(--tt-text);background:var(--tt-bg);font-synthesis:none;text-rendering:optimizeLegibility
+    }
+    *{box-sizing:border-box}
+    [hidden]{display:none!important}
+    body{margin:0;min-width:320px;background:var(--tt-bg);color:var(--tt-text);min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    h1,h2{font-family:"Segoe UI Variable","Segoe UI",Arial,sans-serif;letter-spacing:-.015em;color:var(--tt-navy);font-weight:700}
+    .site-header{background:var(--tt-navy);color:var(--tt-white);padding:18px 28px 16px}
+    .site-header-inner{max-width:1800px;margin:auto;display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+    .brand{display:flex;align-items:center;gap:14px}
+    .logo-mark{flex:none;width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,var(--tt-cyan),var(--tt-blue));color:#fff;display:grid;place-items:center;font-weight:800;font-size:15px}
+    .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:#9EC9E6}
+    h1{font-size:22px;line-height:1.25;margin:4px 0 0;color:var(--tt-white)}
+    .top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .save-status{font-size:12px;color:#C5D8E8;min-width:110px;text-align:right}
+    .save-status:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--tt-green);margin-right:7px}
+    .save-status.offline:before{background:var(--tt-red)}
+    .button{border:1px solid var(--tt-line);color:var(--tt-navy);background:var(--tt-white);border-radius:8px;padding:10px 13px;font-size:13px;font-weight:700;transition:.15s;text-decoration:none;display:inline-flex;align-items:center}
+    .button:hover{border-color:var(--tt-cyan);color:var(--tt-navy);background:#F0FBFC}
+    .button.primary{background:var(--tt-blue);color:white;border-color:var(--tt-blue)}
+    .button.primary:hover{background:#0069A3;border-color:#0069A3;color:#fff}
+    .button.accent{background:var(--tt-cyan);color:var(--tt-navy);border-color:var(--tt-cyan)}
+    .button.accent:hover{background:#04A8B1;color:#fff;border-color:#04A8B1}
+    .button.ghost{background:transparent;border-color:rgba(255,255,255,.28);color:#D7E6F2}
+    .button.ghost:hover{background:rgba(5,190,200,.18);border-color:var(--tt-cyan);color:#fff}
+    .button.danger{color:var(--tt-red);border-color:#F6C7C2;background:#fff}
+    .button.danger:hover{background:#FDECEA;border-color:var(--tt-red)}
+    .button.small{padding:7px 10px;font-size:12px}
+    .app{max-width:1800px;margin:auto;padding:24px 28px 40px;width:100%;flex:1}
+    .intro{color:var(--tt-muted);font-size:14px;margin:0 0 18px}
+    .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:23px}
+    .metric{background:var(--tt-white);border:0;border-radius:12px;padding:16px 19px;box-shadow:var(--tt-shadow)}
+    .metric span{display:block;font-size:12px;color:var(--tt-muted);font-weight:700;letter-spacing:.04em}
+    .metric strong{display:block;font-size:27px;margin-top:4px;color:var(--tt-navy);font-weight:750;font-variant-numeric:tabular-nums}
+    .metric.active strong{color:var(--tt-blue)}.metric.closed strong{color:var(--tt-green)}.metric.pending strong{color:var(--tt-red)}
+    .layout{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:start}
+    .panel{background:var(--tt-white);border:0;border-radius:12px;box-shadow:var(--tt-shadow)}
+    .form-panel{padding:21px}
+    .panel-title{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:17px}
+    h2{font-size:17px;line-height:1.3;margin:0}
+    .panel-hint{font-size:12px;color:var(--tt-muted);margin:4px 0 0}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .field{min-width:0}.field.full{grid-column:1/-1}
+    label{display:block;color:var(--tt-navy);font-weight:700;font-size:12px;margin-bottom:6px}
+    input,select,textarea{width:100%;border:1px solid var(--tt-line);border-radius:7px;padding:10px 11px;color:var(--tt-text);background:var(--tt-white);font-size:13px;outline:none}
+    input:focus,select:focus,textarea:focus{border-color:var(--tt-blue);box-shadow:0 0 0 3px rgba(0,130,202,.18)}
+    textarea{resize:vertical;min-height:74px;line-height:1.45}
+    .form-actions{display:flex;gap:8px;margin-top:15px}
+    .form-actions .button{flex:1;justify-content:center}
+    .list-panel{min-width:0}
+    .list-head{padding:18px 20px 14px;border-bottom:1px solid var(--tt-line)}
+    .sheet-bar{display:flex;align-items:center;gap:7px;overflow:auto;padding:12px 16px;border-bottom:1px solid var(--tt-line)}
+    .sheet-tab{border:1px solid var(--tt-line);border-radius:7px;background:#F4F6F9;color:var(--tt-navy);padding:7px 11px;font-size:12px;font-weight:700;white-space:nowrap}
+    .sheet-tab.active{background:var(--tt-blue);border-color:var(--tt-blue);color:#fff}
+    .sheet-tab span{margin-left:7px;font-size:10px;opacity:.75}
+    .sheet-tab.add{background:#fff;color:var(--tt-cyan);border-color:var(--tt-cyan);border-style:dashed}
+    .list-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+    .count{font-size:12px;color:var(--tt-muted)}
+    .filters{display:grid;grid-template-columns:minmax(170px,1fr) repeat(3,minmax(120px,auto));gap:8px}
+    .filters input{min-width:0}
+    .filters select{width:100%;min-width:0}
+    .filter-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;color:var(--tt-muted);font-size:12px}
+    .clear-filters{border:0;background:transparent;color:var(--tt-blue);font-size:12px;font-weight:700;padding:3px}
+    .form-section{grid-column:1/-1;margin:5px 0 -3px;padding-top:11px;border-top:1px solid var(--tt-line);color:var(--tt-blue);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+    .table-wrap{overflow:auto}
+    table{width:100%;border-collapse:collapse;min-width:1420px}
+    th{text-align:left;background:#F4F6F9;color:var(--tt-navy);font-size:11px;letter-spacing:.035em;text-transform:uppercase;padding:12px 14px;white-space:nowrap}
+    td{padding:14px;border-top:1px solid var(--tt-line);vertical-align:top;font-size:14px;line-height:1.5;color:var(--tt-text)}
+    tbody tr:hover{background:#F7FBFD}
+    .topic-name{font-weight:700;color:var(--tt-navy);font-size:14px}
+    .topic-meta{font-size:12px;color:var(--tt-muted);margin-top:5px}
+    .status{display:inline-block;border-radius:20px;padding:4px 8px;font-size:11px;font-weight:750;white-space:nowrap}
+    .status.active{color:#176B2C;background:#E8F5E9}.status.closed{color:#4B5563;background:#ECEFF1}.status.hold{color:#8A5A00;background:#FFF4CC}
+    .priority{display:inline-block;border-radius:20px;padding:4px 8px;font-size:11px;font-weight:750;white-space:nowrap}
+    .priority.level-1{color:#176B2C;background:#E8F5E9}.priority.level-2{color:#397B35;background:#F0F6D8}.priority.level-3{color:#8A6500;background:#FFF4CC}.priority.level-4{color:#A84300;background:#FCE6D8}.priority.level-5{color:#B42318;background:#FDE8E7}
+    #priority.level-1{color:#176B2C;background:#E8F5E9}#priority.level-2{color:#397B35;background:#F0F6D8}#priority.level-3{color:#8A6500;background:#FFF4CC}#priority.level-4{color:#A84300;background:#FCE6D8}#priority.level-5{color:#B42318;background:#FDE8E7}
+    #status.active{color:#176B2C;background:#E8F5E9}#status.closed{color:#4B5563;background:#ECEFF1}#status.hold{color:#8A5A00;background:#FFF4CC}
+    .service-tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 7px}
+    .service-tag{display:inline-flex;align-items:center;gap:5px;border-radius:14px;padding:4px 8px;background:#E6F4FB;color:var(--tt-navy);font-size:11px;font-weight:700;line-height:1.3}
+    .service-tag button{border:0;background:transparent;color:inherit;font-size:14px;font-weight:700;line-height:1;padding:0}
+    .service-entry{margin-top:2px}
+    .service-cell{display:flex;flex-wrap:wrap;gap:5px;min-width:100px}
+    .service-cell .service-tag{white-space:normal}
+    .grid-priority,.grid-status{border-radius:18px!important;font-weight:750}
+    .latest{max-width:250px;white-space:pre-wrap;line-height:1.5}
+    .history{min-width:220px;max-width:340px}
+    .history summary{cursor:pointer;color:var(--tt-blue);font-size:12px;font-weight:700}
+    .history-list{margin:9px 0 0;padding:0;list-style:none}
+    .history-list li{border-left:2px solid var(--tt-cyan);padding:0 0 12px 10px;color:var(--tt-muted);font-size:12px;white-space:pre-wrap}
+    .history-list li:last-child{padding-bottom:0}
+    .history-date{display:block;margin-bottom:3px;color:var(--tt-blue);font-size:11px;font-weight:750}
+    .history-entry-date{display:block;margin-bottom:4px;color:var(--tt-muted);font-size:11px}
+    .history-context{display:grid;gap:7px;margin:10px 0 12px;padding:10px;border-radius:8px;background:#F4F6F9;font-size:11px}
+    .history-context-row{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap}
+    .history-context-label{flex:0 0 145px;color:var(--tt-muted);font-weight:700}
+    .legacy-closing-note{display:block;margin:0 8px 5px;color:var(--tt-muted);font-size:11px;white-space:normal}
+    .combined-history{min-width:230px;max-width:360px}
+    .row-actions{display:flex;gap:6px;white-space:nowrap}
+    .weekly-add{min-width:32px;justify-content:center;font-size:16px}
+    #gridWrap select.grid-priority.priority.level-1{color:#176B2C}
+    #gridWrap select.grid-priority.priority.level-2{color:#397B35}
+    #gridWrap select.grid-priority.priority.level-3{color:#8A6500}
+    #gridWrap select.grid-priority.priority.level-4{color:#A84300}
+    #gridWrap select.grid-priority.priority.level-5{color:#B42318}
+    #gridWrap select.grid-status.status.active{color:#176B2C}
+    #gridWrap select.grid-status.status.closed{color:#4B5563}
+    #gridWrap select.grid-status.status.hold{color:#8A5A00}
+    .empty{padding:50px 20px;text-align:center;color:var(--tt-muted)}
+    .empty strong{display:block;color:var(--tt-navy);margin-bottom:5px}
+    .notice{display:none;margin:0 0 16px;padding:11px 14px;border-radius:8px;font-size:13px}
+    .notice.show{display:block}.notice.info{background:#E6F4FB;color:var(--tt-navy)}.notice.error{background:#FDECEA;color:var(--tt-red)}.notice.success{background:#EEF8EE;color:#2E7D32}
+    .hidden{display:none!important}
+    .file-input{display:none}
+    .site-footer{background:var(--tt-navy);color:#9EC9E6;padding:16px 28px 20px;margin-top:auto}
+    .site-footer p{max-width:1800px;margin:0 auto;font-size:11px;line-height:1.5}
+    dialog{width:min(420px,calc(100% - 28px));border:0;border-radius:12px;padding:22px;color:var(--tt-text);box-shadow:0 18px 60px rgba(0,40,85,.28);background:var(--tt-white)}
+    dialog::backdrop{background:rgba(0,40,85,.55)}
+    .dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+    .workbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.workbar span{margin-right:auto;color:var(--tt-muted);font-size:13px}
+    .insights{display:flex;gap:24px;padding:14px 18px 16px;font-size:13px;flex-wrap:wrap;background:var(--tt-white);border-radius:12px;box-shadow:var(--tt-shadow);margin-bottom:16px}
+    .insights b{color:var(--tt-navy);margin-right:6px}
+    .grid-help{font-size:12px;color:var(--tt-muted);padding:12px 16px;background:#F4F6F9}
+    #gridWrap{max-height:68vh}#gridWrap table{min-width:2250px;table-layout:fixed}#gridWrap th{position:sticky;top:0;z-index:2}#gridWrap td{padding:0;vertical-align:middle}
+    #gridWrap input,#gridWrap select{border:0;border-radius:0;min-height:45px;background:transparent;padding:10px;font-size:13px}#gridWrap input:focus,#gridWrap select:focus{outline:2px solid var(--tt-blue);outline-offset:-2px;box-shadow:none}
+    #gridWrap td.changed{background:#E8FBFC}#gridWrap th:first-child,#gridWrap td:first-child,#gridWrap th:nth-child(2),#gridWrap td:nth-child(2){width:42px;text-align:center}#gridWrap th:nth-child(3){width:240px}#gridWrap th:nth-child(11){width:360px}#gridWrap th:last-child{width:250px}
+    #weeklyDialog{width:min(600px,calc(100% - 28px))}
+    @media(max-width:980px){
+      .app{padding:20px}.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .site-header-inner{display:block}.top-actions{justify-content:flex-start;margin-top:14px}
+    }
+    @media(max-width:640px){
+      .app{padding:16px 12px 28px}.site-header{padding:16px 12px}.save-status{text-align:left}
+      .metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.metric{padding:13px}.metric strong{font-size:23px}
+      .form-grid{grid-template-columns:1fr}.field.full,.form-section{grid-column:auto}.list-head{padding:15px 13px}.filters{grid-template-columns:1fr}.filter-summary{align-items:flex-start}
+    }
+
+    /* Table-first workspace. Brand colors match the supplied design brief. */
+    .site-header{padding:20px 28px}.site-header-inner{align-items:center}
+    .brand-subtitle{font-size:11px;color:#adc8df;margin-top:6px;max-width:310px;line-height:1.5}
+    .top-actions{max-width:780px}.top-actions .button{font-size:11px;padding:8px 10px}
+    .workspace-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:6px 0 22px}
+    .workspace-heading .eyebrow{color:#0082ca;font-size:10px;letter-spacing:.12em}
+    .workspace-heading h2{font-size:30px;margin:6px 0}.workspace-heading .intro{margin:0;font-size:13px}
+    .metrics{gap:12px;margin-bottom:18px}.metric{border:1px solid #e4eaf0;box-shadow:none;padding:14px 20px}.metric strong{font-size:26px}
+    .workbar{padding:10px 14px;background:#eaf5f5;border:1px solid #d1e8e7;border-radius:9px}.workbar .button{font-size:11px;padding:6px 9px}.workbar span{color:#27635c;font-size:12px}
+    .insights{box-shadow:none;background:transparent;padding:0 2px;font-size:11px;gap:16px;color:var(--tt-muted)}
+    .panel{border:1px solid #e3e8ee;box-shadow:0 4px 20px #00285506}
+    .sheet-bar{background:#fafbfd;border-radius:12px 12px 0 0;padding:12px 18px}.sheet-tab{border-radius:6px}
+    .quick-filters{display:flex;gap:6px;flex-wrap:wrap;padding:12px 18px}.quick-filters .sheet-tab{font-size:11px;font-weight:600;background:white}.quick-filters .active{color:#006c9c;background:#e8f6fc;border-color:#b4ddee}
+    .grid-help{padding:9px 18px;font-size:11px;background:#fafbfd;border-top:1px solid #edf0f4}
+    #gridWrap{max-height:60vh}#gridWrap table{min-width:1570px}#gridWrap th{font-size:10px;letter-spacing:0;text-transform:none;background:#edf3f8;padding:12px 8px}
+    #gridWrap th:nth-child(3){width:230px}#gridWrap th:nth-child(4){width:130px}#gridWrap th:nth-child(5){width:100px}#gridWrap th:nth-child(6){width:145px}#gridWrap th:nth-child(7){width:130px}#gridWrap th:nth-child(8){width:70px}#gridWrap th:nth-child(9){width:100px}#gridWrap th:nth-child(10){width:250px}#gridWrap th:nth-child(11){width:190px}#gridWrap th:last-child{width:145px}
+    #gridWrap input,#gridWrap select{font-size:12px;min-height:52px}#gridWrap td{border-right:1px solid #f0f3f6}#gridWrap .history{min-width:0;padding:8px;max-width:100%}#gridWrap .history summary{font-size:10px}
+    #gridWrap th:nth-child(3),#gridWrap td:nth-child(3){position:sticky;left:0;z-index:1;background:#fff;border-right:1px solid #dbe4ee}#gridWrap th:nth-child(3){z-index:3;background:#edf3f8}
+    #gridWrap td:nth-child(3) input{font-weight:650;color:var(--tt-navy)}#gridWrap td.changed{background:#e8fbfc}
+    .quick-add{display:flex;gap:10px;align-items:center;padding:14px 18px;border-top:1px solid #e3e8ee;background:#fafcfe;border-radius:0 0 12px 12px}.quick-add>span{color:#0082ca;font-size:24px}.quick-add input{max-width:420px}.quick-add #quickOwner{max-width:220px}
+    #topicDrawer{position:fixed;inset:0 0 0 auto;margin:0;height:100dvh;max-height:100dvh;width:min(520px,100vw);max-width:100vw;border-radius:16px 0 0 16px;padding:28px;overflow-y:auto;box-shadow:-20px 0 70px #00285530}
+    #topicDrawer::backdrop{background:#00285555;backdrop-filter:blur(2px)}.drawer-close{float:right;font-size:19px;padding:3px 10px}.form-panel .panel-title{margin-right:40px}.form-panel .panel-hint{line-height:1.5}
+    #gridWrap.compact-columns table{min-width:1320px}
+    #gridWrap.compact-columns th:nth-child(4),#gridWrap.compact-columns td:nth-child(4),#gridWrap.compact-columns th:nth-child(5),#gridWrap.compact-columns td:nth-child(5){display:none}
+    .site-footer{background:transparent;color:#81909e;text-align:center;padding:12px 28px}
+    @media(max-width:700px){.workspace-heading h2{font-size:24px}.quick-add{flex-wrap:wrap}.quick-add input,.quick-add #quickOwner{max-width:none;flex:1;min-width:140px}.workbar{gap:6px}.workbar span{width:100%}.brand-subtitle{max-width:none}}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="brand">
+        <div class="logo-mark" aria-hidden="true">TT</div>
+        <div><div class="eyebrow">İş takip · ortak ağ klasörü</div><h1>İş Takip</h1><div class="brand-subtitle">Ortak ağ klasörü için görev yönetimi</div></div>
+      </div>
+      <nav class="top-actions" aria-label="Üst menü">
+        <span class="save-status" id="saveStatus" aria-live="polite">Ortak klasöre bağlanılıyor</span>
+        <button class="button ghost" id="importExcelBtn" type="button">Excel içe aktar</button>
+        <a class="button ghost" href="/haftalik-rapor-v2.html" target="_blank" rel="noopener">V2 Excel ekranı</a>
+        <button class="button ghost" id="exportExcelBtn" type="button">Excel çıktısı</button>
+        <button class="button primary" id="htmlReportBtn" type="button">Yönetici HTML raporu indir</button>
+        <button class="button ghost" id="backupBtn" type="button">JSON yedek indir</button>
+        <button class="button ghost" id="restoreBtn" type="button">Yedekten yükle</button>
+      </nav>
+    </div>
+  </header>
+  <main class="app">
+    <div class="workspace-heading"><div><span class="eyebrow">EKİBİN ORTAK ÇALIŞMA ALANI</span><h2>İşler, tek bir yerde.</h2><p class="intro">Konuları güncelleyin, haftayı takip edin ve raporunuzu hazırlayın.</p></div><button class="button primary" id="newTopicBtn">+ Yeni konu</button></div>
+    <section class="workbar"><span id="gridStatus" aria-live="polite">Değişiklik yok</span><button class="button" id="discardGrid">Tablo değişikliklerinden vazgeç</button><button class="button primary" id="saveGrid">Şimdi kaydet</button></section>
+    <section id="insights" class="insights" aria-label="Takip sinyalleri"></section>
+    <div class="notice" id="notice" role="status"></div>
+    <section class="metrics" aria-label="Konu özeti">
+      <div class="metric"><span>TOPLAM KONU</span><strong id="totalCount">0</strong></div>
+      <div class="metric active"><span>AKTİF</span><strong id="activeCount">0</strong></div>
+      <div class="metric closed"><span>KAPANDI</span><strong id="closedCount">0</strong></div>
+      <div class="metric pending"><span>ASKIDA</span><strong id="holdCount">0</strong></div>
+    </section>
+    <section class="layout">
+      <dialog id="topicDrawer" class="panel form-panel" aria-labelledby="formTitle">
+<button class="drawer-close button" id="closeDrawer" type="button" aria-label="Konu panelini kapat">×</button>
+        <div class="panel-title"><div><h2 id="formTitle">Yeni konu ekle</h2><p class="panel-hint">Konu ve etkilenen servis bilgilerini girin.</p></div></div>
+        <form id="topicForm">
+          <input id="topicId" type="hidden">
+          <div class="form-grid">
+            <div class="field full"><label for="topicSheet">Excel sayfası</label><select id="topicSheet"></select></div>
+            <div class="field full"><label for="topic">Konu *</label><input id="topic" maxlength="240" required placeholder="Örn. Servis geçiş planı"></div>
+            <div class="field full"><label for="owner">Sorumlu</label><input id="owner" maxlength="160" placeholder="Ad soyad"></div>
+            <div class="field full"><label for="serviceTagInput">Etkilenen servisler</label><input id="service" type="hidden"><div id="serviceTags" class="service-tags" aria-live="polite"></div><input id="serviceTagInput" class="service-entry" maxlength="160" list="serviceOptions" placeholder="Servis adı yazıp Enter'a basın"><datalist id="serviceOptions"></datalist><p class="topic-meta">Her servis için yazıp Enter'a basın; etiketleri × ile kaldırabilirsiniz.</p></div>
+            <div class="field"><label for="topicType">Proje / Talep</label><input id="topicType" maxlength="100" list="topicTypeOptions" placeholder="Proje veya Talep"><datalist id="topicTypeOptions"><option value="Proje"></option><option value="Talep"></option></datalist></div>
+            <div class="field"><label for="priority">Önem (1–5)</label><select id="priority"><option value="">Belirtilmedi</option><option value="1">1 · Düşük</option><option value="2">2</option><option value="3">3 · Orta</option><option value="4">4</option><option value="5">5 · Yüksek</option></select></div>
+            <div class="field"><label for="status">Durum</label><select id="status"><option value="Aktif">Aktif</option><option value="Kapandı">Kapandı</option><option value="Askıda">Askıda</option></select></div>
+            <div class="field"><label for="closingDate">Planlanan kapanış tarihi</label><input id="closingDate" type="date"><input id="closingDateNote" type="text" maxlength="160" placeholder="Tarih yerine planlama notu" style="margin-top:7px"><p class="topic-meta">Takvimden tarih seçin veya “Planlanıyor” gibi bir not yazın.</p></div>
+            <div class="form-section">Güncel takip</div>
+            <div class="field full"><label for="current">Güncel durum / sonraki adım</label><textarea id="current" maxlength="2000" placeholder="Son durum, blokaj veya sonraki adım"></textarea></div>
+          </div>
+          <div class="form-actions"><button class="button primary" id="saveTopicBtn" type="submit">Konuyu kaydet</button><button class="button" id="resetFormBtn" type="button">Formu temizle</button><button class="button hidden" id="cancelEditBtn" type="button">Vazgeç</button></div>
+        </form>
+      </dialog>
+      <section class="panel list-panel" aria-label="Konu listesi">
+        <div class="sheet-bar" id="sheetBar" aria-label="Excel sayfaları"></div>
+        <div class="list-head">
+          <div class="list-heading"><h2>Konular</h2><button class="button small" id="toggleColumns" type="button" aria-pressed="false">Tüm sütunları göster</button><span class="count" id="resultCount">0 kayıt</span></div>
+          <div class="filters">
+            <input id="searchInput" type="search" placeholder="Konu, servis veya not ara..." aria-label="Konu ara">
+            <select id="statusFilter" aria-label="Duruma göre filtrele"><option value="">Tüm durumlar</option><option value="Aktif">Aktif</option><option value="Kapandı">Kapandı</option><option value="Askıda">Askıda</option></select>
+            <select id="priorityFilter" aria-label="Öneme göre filtrele"><option value="">Tüm önemler</option><option value="1">Önem 1</option><option value="2">Önem 2</option><option value="3">Önem 3</option><option value="4">Önem 4</option><option value="5">Önem 5</option><option value="none">Önem belirtilmedi</option></select>
+            <select id="serviceFilter" aria-label="Servise göre filtrele"><option value="">Tüm servisler</option></select>
+          </div>
+          <div class="filter-summary"><span id="activeFilterSummary">Tüm konular görüntüleniyor</span><button class="clear-filters" id="clearFiltersBtn" type="button">Filtreleri temizle</button></div>
+        </div>
+        <div class="quick-filters" id="quickFilters" aria-label="Hızlı takip filtreleri">
+<button class="sheet-tab active" data-quick="all">Tüm işler</button><button class="sheet-tab" data-quick="weekly">Bu hafta güncellenmeyen</button><button class="sheet-tab" data-quick="late">Geciken</button><button class="sheet-tab" data-quick="soon">7 gün içinde kapanacak</button><button class="sheet-tab" data-quick="high">Yüksek öncelikli</button><button class="sheet-tab" data-quick="unassigned">Sorumlusu eksik</button>
+</div><div class="grid-help">Hücreyi düzenleyip Tab veya Enter ile ilerleyin; değişiklik otomatik kaydedilir. + ile haftalık not ekleyin. Excel’den çoklu hücre yapıştırabilirsiniz.</div>
+        <div id="gridWrap" class="table-wrap compact-columns"></div>
+        <form id="quickAdd" class="quick-add"><span aria-hidden="true">＋</span><input id="quickTopic" required maxlength="240" aria-label="Yeni konu" placeholder="Yeni konu yazın…"><input id="quickOwner" maxlength="160" aria-label="Yeni konunun sorumlusu" placeholder="Sorumlu (isteğe bağlı)"><button class="button primary" type="submit">Ekle</button></form>
+        <div class="empty hidden" id="emptyState"><strong>Henüz gösterilecek konu yok</strong>Yeni konu ekleyin veya bir Excel dosyasından içe aktarın.</div>
+      </section>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <p>Ortak çalışma · Değişiklikler ortak klasöre kaydedilir. Yönetici raporu kaydedilmiş verilerden hazırlanır.</p>
+  </footer>
+    <input class="file-input" id="excelFile" type="file" accept=".xlsx,.xls,.csv">
+    <input class="file-input" id="jsonFile" type="file" accept=".json">
+    <dialog id="sheetDialog">
+      <form id="sheetForm">
+        <h2>Yeni Excel sayfası</h2>
+        <p class="panel-hint">Sayfa adı, dışa aktarılan Excel’de çalışma sayfası adı olarak kullanılır.</p>
+        <div class="field" style="margin-top:14px"><label for="newSheetName">Sayfa adı</label><input id="newSheetName" maxlength="31" required placeholder="Örn. Servis Yönetimi"></div>
+        <div class="dialog-actions"><button class="button" id="cancelSheetBtn" type="button">Vazgeç</button><button class="button primary" type="submit">Sayfa oluştur</button></div>
+      </form>
+    </dialog>
+    <dialog id="weeklyDialog">
+      <form id="weeklyForm">
+        <h2>Haftalık güncelleme ekle</h2>
+        <p class="panel-hint" id="weeklyTopicTitle"></p>
+        <div class="field" style="margin-top:14px"><label for="weeklyWeekRange">İşlenecek hafta</label><input id="weeklyWeekRange" type="text" readonly></div>
+        <div class="field" style="margin-top:12px"><label for="weeklyExactDate">Eklenme tarihi</label><input id="weeklyExactDate" type="text" readonly></div>
+        <div class="field" style="margin-top:12px"><label for="weeklyNote">Haftalık not *</label><textarea id="weeklyNote" maxlength="2000" required placeholder="Bu hafta yapılanlar, mevcut durum veya sonraki adım"></textarea></div>
+        <div class="dialog-actions"><button class="button" id="cancelWeeklyBtn" type="button">Vazgeç</button><button class="button primary" id="saveWeeklyBtn" type="submit">Güncellemeyi kaydet</button></div>
+      </form>
+    </dialog>
+  <script>
+    (() => {
+      'use strict';
+      const STORAGE_KEY = 'weekly-report-network-folder-data';
+      const REPORT_KEY = 'weekly-report-v3-report';
+      const $ = id => document.getElementById(id);
+      const sharePoint = /(^|\.)sharepoint\.com$/i.test(location.hostname);
+      const siteMatch = location.pathname.match(/^\/(sites|teams|personal)\/[^/]+/i);
+      const siteRoot = siteMatch ? `/${siteMatch[1]}/${siteMatch[0].split('/').pop()}` : '';
+      const sharePointApi = `${location.origin}${siteRoot}/_api/web`;
+      const sharePointFolder = decodeURIComponent(location.pathname.slice(0, location.pathname.lastIndexOf('/')));
+      const state = {
+        topics: [], sheets: ['Konular'], activeSheet: 'all',
+        projectStorage: false, backend: 'browser',
+        baseTopics: [], baseSheets: ['Konular'], remoteEtag: null,
+        pendingRemoteEtag: null, syncError: null, cacheWarning: null,
+        localFallbackLoaded: false, saving: false
+      };
+      const form = $('topicForm');
+      const serviceOptions = $('serviceOptions');
+      let serviceTags = [];
+      const norm = value => String(value || '').toLocaleLowerCase('tr-TR')
+        .replace(/[ıİ]/g, 'i').replace(/[şŞ]/g, 's').replace(/[ğĞ]/g, 'g')
+        .replace(/[üÜ]/g, 'u').replace(/[öÖ]/g, 'o').replace(/[çÇ]/g, 'c').trim();
+      const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+      })[char]);
+      const announce = (message, type = 'info') => {
+        const notice = $('notice');
+        notice.textContent = message;
+        notice.className = `notice show ${type}`;
+        clearTimeout(announce.timer);
+        if(type!=='error') announce.timer = setTimeout(() => notice.classList.remove('show'), 8000);
+      };
+      const formatDate = value => {
+        if (!value) return '';
+        const date = new Date(`${value}T00:00:00`);
+        return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('tr-TR').format(date);
+      };
+      const localDate = () => {
+        const date = new Date();
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      };
+      const priorityValue = value => {
+        const match = String(value || '').match(/[1-5]/);
+        return match ? match[0] : '';
+      };
+      const normalizeStatus = value => {
+        const status = norm(value);
+        if (status.includes('kapan') || status.includes('tamam') || status.includes('bitti')) return 'Kapandı';
+        if (status.includes('aski') || status.includes('bekli') || status.includes('baslamadi') || status.includes('planlan')) return 'Askıda';
+        return 'Aktif';
+      };
+      const statusKind = status => status === 'Kapandı' ? 'closed' : status === 'Askıda' ? 'hold' : 'active';
+      function updateFormBadgeColors() {
+        $('priority').className = `level-${priorityValue($('priority').value) || '0'}`;
+        $('status').className = statusKind($('status').value);
+      }
+      const announceSaved = message => {
+        const details = [
+          state.projectStorage ? '' : 'Yalnızca bu tarayıcıya kaydedildi; henüz ortak dosyaya yazılmadı.',
+          state.cacheWarning ? `Tarayıcı yedeği oluşturulamadı: ${state.cacheWarning}` : ''
+        ].filter(Boolean).join(' ');
+        announce(details ? `${message} ${details}` : message, details ? 'warning' : 'success');
+      };
+      const dateKey = value => {
+        const text = String(value || '');
+        if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+        const match = text.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+        return match ? `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}` : '';
+      };
+      const calendarDateValue = value => {
+        const key = dateKey(value);
+        if (!key) return '';
+        const date = new Date(`${key}T00:00:00`);
+        return !Number.isNaN(date.getTime()) &&
+          `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` === key
+          ? key : '';
+      };
+      const weekRangeLabel = value => {
+        const key = dateKey(value);
+        if (!key) return '';
+        const monday = new Date(`${key}T00:00:00`);
+        const localKey = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}-${String(monday.getDate()).padStart(2, '0')}`;
+        if (Number.isNaN(monday.getTime()) || localKey !== key) return '';
+        monday.setDate(monday.getDate() - (monday.getDay() + 6) % 7);
+        const friday = new Date(monday);
+        friday.setDate(friday.getDate() + 4);
+        const toIso = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        const shortDate = date => new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long' }).format(date);
+        if (monday.getFullYear() !== friday.getFullYear()) {
+          return `${formatDate(toIso(monday))} - ${formatDate(toIso(friday))} haftası`;
+        }
+        return `${shortDate(monday)} - ${shortDate(friday)} haftası ${friday.getFullYear()}`;
+      };
+      const updateDateLabel = value => {
+        const key = dateKey(value);
+        return key ? formatDate(key) : String(value || 'Tarih belirtilmedi');
+      };
+      const orderedUpdates = updates => {
+        const items = [...(updates || [])];
+        return items.every(update => dateKey(update.date))
+          ? items.sort((a, b) => dateKey(a.date).localeCompare(dateKey(b.date)))
+          : items;
+      };
+      const orderedWeeklyLabels = labels => {
+        const unique = uniqueNames(labels);
+        if (unique.every(label => dateKey(label))) return unique.sort((a, b) => dateKey(a).localeCompare(dateKey(b)));
+        const months = new Map(['ocak','şubat','mart','nisan','mayıs','haziran','temmuz','ağustos','eylül','ekim','kasım','aralık'].map((month, index) => [month, String(index + 1).padStart(2, '0')]));
+        const weekStartKey = label => {
+          const match = String(label).match(/^(\d{1,2})\s+([^\s]+)(?:\s+(\d{4}))?/);
+          if (!match) return '';
+          const year = match[3] || String(label).match(/(\d{4})(?:\s*-\s*\d{4})?\s*$/)?.[1];
+          const month = months.get(match[2].toLocaleLowerCase('tr-TR'));
+          return year && month ? `${year}-${month}-${match[1].padStart(2, '0')}` : '';
+        };
+        const keys = unique.map(weekStartKey);
+        return keys.every(Boolean) ? unique.sort((a, b) => weekStartKey(a).localeCompare(weekStartKey(b))) : unique;
+      };
+      const latestUpdate = topic => orderedUpdates(topic.updates).at(-1) || null;
+      const copy = value => JSON.parse(JSON.stringify(value));
+      const uniqueNames = values => {
+        const names = new Map();
+        // Sheet names are identities, not search terms. Preserve spaces and accents
+        // exactly as V2/Excel do; "İş", "Is" and " Sayfa " must not be collapsed.
+        values.map(value => String(value ?? '')).filter(value=>value.trim()).forEach(value => {
+          if (!names.has(value)) names.set(value, value);
+        });
+        return [...names.values()];
+      };
+      const parseServiceTags = value => uniqueNames(String(value || '').split(',').map(item => item.trim()).filter(Boolean));
+      const serviceTagMarkup = (service, index, removable = false) =>
+        `<span class="service-tag">${escapeHtml(service)}${removable ? `<button type="button" data-remove-service="${index}" aria-label="${escapeHtml(service)} etiketini kaldır">×</button>` : ''}</span>`;
+      function renderServiceTags() {
+        $('serviceTags').innerHTML = serviceTags.map((service, index) => serviceTagMarkup(service, index, true)).join('');
+        $('service').value = serviceTags.join(', ');
+      }
+      function addServiceTags(values) {
+        const additions = parseServiceTags(values);
+        additions.forEach(service => {
+          if (!serviceTags.some(existing => norm(existing) === norm(service))) serviceTags.push(service);
+        });
+        renderServiceTags();
+      }
+      function commitServiceEntry() {
+        const input = $('serviceTagInput');
+        if (!input.value.trim()) return;
+        addServiceTags(input.value);
+        input.value = '';
+      }
+      const odata = value => String(value).replace(/'/g, "''");
+      const responseEtag = (data, response) =>
+        data?.ETag || data?.etag || data?.['odata.etag'] ||
+        data?.d?.__metadata?.etag || response.headers.get('ETag');
+
+      function sharePointEndpoint(serverRelativePath) {
+        const encodedPath = encodeURIComponent(`'${odata(serverRelativePath)}'`).replace(/%2F/g, '/');
+        return `${sharePointApi}/GetFileByServerRelativePath(decodedurl=${encodedPath})`;
+      }
+
+      async function getRequestDigest() {
+        const response = await fetch(`${sharePointApi}/contextinfo`, {
+          method: 'POST',
+          headers: { Accept: 'application/json;odata=nometadata' },
+          credentials: 'same-origin'
+        });
+        if (!response.ok) throw new Error(`SharePoint form digest alınamadı (${response.status}).`);
+        const data = await response.json();
+        const digest = data.FormDigestValue || data.GetContextWebInformation?.FormDigestValue ||
+          data.d?.GetContextWebInformation?.FormDigestValue;
+        if (!digest) throw new Error('SharePoint yanıtında form digest bulunamadı.');
+        return digest;
+      }
+
+      async function createSharePointFile(fileName, content) {
+        const folderPath = encodeURIComponent(`'${odata(sharePointFolder)}'`).replace(/%2F/g, '/');
+        const filePath = encodeURIComponent(`'${odata(fileName)}'`);
+        const url = `${sharePointApi}/GetFolderByServerRelativePath(decodedurl=${folderPath})/Files/addUsingPath(decodedurl=${filePath},overwrite=false)`;
+        return fetch(url, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json;odata=nometadata',
+            'Content-Type': 'application/json; charset=utf-8',
+            'X-RequestDigest': await getRequestDigest()
+          },
+          credentials: 'same-origin',
+          body: content
+        });
+      }
+
+      async function readSharePointData() {
+        const filePath = `${sharePointFolder}/data.json`;
+        const endpoint = sharePointEndpoint(filePath);
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const metadataResponse = await fetch(endpoint, {
+            headers: { Accept: 'application/json;odata=nometadata' },
+            credentials: 'same-origin',
+            cache: 'no-store'
+          });
+          if (metadataResponse.status === 404) {
+            const initial = JSON.stringify({ version: 1, sheets: ['Konular'], topics: [] }, null, 2);
+            const created = await createSharePointFile('data.json', initial);
+            if (!created.ok && created.status !== 409) {
+              throw new Error(`data.json oluşturulamadı (${created.status}); klasör yazma iznini kontrol edin.`);
+            }
+            continue;
+          }
+          if (!metadataResponse.ok) throw new Error(`SharePoint verisi okunamadı (${metadataResponse.status}).`);
+          const metadata = await metadataResponse.json();
+          const beforeEtag = responseEtag(metadata, metadataResponse);
+          const valueResponse = await fetch(`${endpoint}/$value`, {
+            credentials: 'same-origin',
+            cache: 'no-store'
+          });
+          if (!valueResponse.ok) throw new Error(`data.json içeriği okunamadı (${valueResponse.status}).`);
+          const raw = await valueResponse.text();
+          const verifyResponse = await fetch(endpoint, {
+            headers: { Accept: 'application/json;odata=nometadata' },
+            credentials: 'same-origin',
+            cache: 'no-store'
+          });
+          if (!verifyResponse.ok) throw new Error(`SharePoint sürümü doğrulanamadı (${verifyResponse.status}).`);
+          const verifyData = await verifyResponse.json();
+          const etag = responseEtag(verifyData, verifyResponse);
+          if (!etag) throw new Error('SharePoint dosya sürümü (ETag) alınamadı; eşzamanlı kayıt güvenli değil.');
+          if (beforeEtag && beforeEtag !== etag) continue;
+          return { data: validateData(JSON.parse(raw)), raw, etag };
+        }
+        throw new Error('data.json okunurken sürekli değişti; birkaç saniye sonra tekrar deneyin.');
+      }
+
+      async function saveSharePointFile(content, etag) {
+        const response = await fetch(`${sharePointEndpoint(`${sharePointFolder}/data.json`)}/$value`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json;odata=nometadata',
+            'Content-Type': 'application/json; charset=utf-8',
+            'X-HTTP-Method': 'PUT',
+            'IF-MATCH': etag,
+            'X-RequestDigest': await getRequestDigest()
+          },
+          credentials: 'same-origin',
+          body: content
+        });
+        if (response.status === 412) {
+          const conflict = new Error('SharePoint dosyası başka biri tarafından aynı anda güncellendi.');
+          conflict.name = 'VersionConflictError';
+          throw conflict;
+        }
+        if (!response.ok) throw new Error(`SharePoint dosyasına yazılamadı (${response.status}).`);
+      }
+
+      async function backupSharePointFile(raw) {
+        const backupName = `data-backup-${localDate()}.json`;
+        const response = await createSharePointFile(backupName, raw);
+        if (!response.ok) {
+          const existing = await fetch(sharePointEndpoint(`${sharePointFolder}/${backupName}`), {
+            headers: { Accept: 'application/json;odata=nometadata' },
+            credentials: 'same-origin',
+            cache: 'no-store'
+          });
+          if (!existing.ok) {
+            throw new Error(`Otomatik yedek oluşturulamadı (${response.status}); kayıt yapılmadı.`);
+          }
+        }
+      }
+
+      function mergeTopics(baseTopics, localTopics, remoteTopics) {
+        const base = new Map(baseTopics.map(topic => [topic.id, topic]));
+        const local = new Map(localTopics.map(topic => [topic.id, topic]));
+        const remote = new Map(remoteTopics.map(topic => [topic.id, topic]));
+        const merged = [];
+        const conflicts = [];
+        const conflictIds = new Set();
+        const addConflict = (id, topic) => {
+          conflicts.push(topic);
+          conflictIds.add(id);
+        };
+        const fields = ['owner', 'sheet', 'topic', 'service', 'topicType', 'priority', 'status', 'closingDate', 'current'];
+        for (const id of new Set([...base.keys(), ...local.keys(), ...remote.keys()])) {
+          const before = base.get(id);
+          const ours = local.get(id);
+          const theirs = remote.get(id);
+          if (!before) {
+            if (ours && theirs && JSON.stringify(ours) !== JSON.stringify(theirs)) addConflict(id, ours.topic);
+            else if (ours || theirs) merged.push(copy(ours || theirs));
+            continue;
+          }
+          if (!ours && !theirs) continue;
+          if (!ours) {
+            if (JSON.stringify(before) !== JSON.stringify(theirs)) addConflict(id, before.topic);
+            continue;
+          }
+          if (!theirs) {
+            if (JSON.stringify(before) !== JSON.stringify(ours)) addConflict(id, ours.topic);
+            continue;
+          }
+          const result = copy(theirs);
+          for (const field of fields) {
+            const localChanged = ours[field] !== before[field];
+            const remoteChanged = theirs[field] !== before[field];
+            if (localChanged && remoteChanged && ours[field] !== theirs[field]) {
+              addConflict(id, ours.topic);
+              result[field] = ours[field];
+            } else if (localChanged) result[field] = ours[field];
+          }
+          const baseUpdates = new Map((before.updates || []).map(update => [update.id, update]));
+          const localUpdates = new Map((ours.updates || []).map(update => [update.id, update]));
+          const remoteUpdates = new Map((theirs.updates || []).map(update => [update.id, update]));
+          const updates = [];
+          for (const updateId of new Set([...baseUpdates.keys(), ...localUpdates.keys(), ...remoteUpdates.keys()])) {
+            const oldUpdate = baseUpdates.get(updateId);
+            const localUpdate = localUpdates.get(updateId);
+            const remoteUpdate = remoteUpdates.get(updateId);
+            if (!oldUpdate) {
+              const addition = localUpdate || remoteUpdate;
+              if (localUpdate && remoteUpdate && JSON.stringify(localUpdate) !== JSON.stringify(remoteUpdate)) addConflict(id, ours.topic);
+              if (addition) updates.push(copy(addition));
+            } else if (!localUpdate && !remoteUpdate) {
+              continue;
+            } else if (!localUpdate) {
+              if (JSON.stringify(oldUpdate) !== JSON.stringify(remoteUpdate)) addConflict(id, ours.topic);
+            } else if (!remoteUpdate) {
+              if (JSON.stringify(oldUpdate) !== JSON.stringify(localUpdate)) addConflict(id, ours.topic);
+            } else if (JSON.stringify(localUpdate) !== JSON.stringify(oldUpdate) &&
+                       JSON.stringify(remoteUpdate) !== JSON.stringify(oldUpdate) &&
+                       JSON.stringify(localUpdate) !== JSON.stringify(remoteUpdate)) {
+              addConflict(id, ours.topic);
+            } else {
+              updates.push(copy(JSON.stringify(localUpdate) !== JSON.stringify(oldUpdate) ? localUpdate : remoteUpdate));
+            }
+          }
+          result.updates = updates;
+          merged.push(result);
+        }
+        return { topics: merged, conflicts: uniqueNames(conflicts), conflictIds: [...conflictIds] };
+      }
+
+      function setStorageLabel() {
+        const status = $('saveStatus');
+        status.textContent = state.projectStorage
+          ? (sharePoint ? 'SharePoint ortak dosya' : 'Ortak klasör bağlantısı hazır')
+          : 'Bağlantı yok · taslak korunuyor';
+        status.classList.toggle('offline', !state.projectStorage);
+      }
+
+      async function persist(topics = state.topics, sheets = state.sheets) {
+        if (uncertainWrite) { announce('Önce İşlem sonucunu denetle düğmesini kullanın; aynı kayıt tekrar gönderilmedi.', 'error'); return false; }
+        if (state.backend !== 'localApi') { announce('Ekranı ortak klasördeki IsTakip.exe üzerinden açın.', 'error'); return false; }
+        if (gridDrafts.size && !gridSaving) { announce('Önce tablodaki değişiklikleri kaydedin veya geri alın.', 'error'); return false; }
+        if (state.saving) { announce('Önceki kayıt tamamlanıyor.', 'info'); return false; }
+        state.cacheWarning = null;
+        const payload = { version: 1, updatedAt: new Date().toISOString(), sheets, topics };
+        if (topics.length > 10000) {
+          announce('En fazla 10.000 konu kaydedilebilir.', 'error');
+          return false;
+        }
+        const serializedPayload = JSON.stringify(payload);
+        if (new TextEncoder().encode(serializedPayload).length > 9 * 1024 * 1024) {
+          announce('Kayıt dosyası 9 MB sınırını aşıyor; Excel içe aktarma kapsamını küçültün.', 'error');
+          return false;
+        }
+        state.saving = true;
+        let localSaveError = null;
+        try {
+          localStorage.setItem(STORAGE_KEY, serializedPayload);
+        } catch (error) {
+          localSaveError = error;
+          state.cacheWarning = error.message;
+          if (state.backend === 'browser') announce(`Tarayıcı yedeği yazılamadı: ${error.message}`, 'error');
+        }
+        if (state.backend === 'browser' && localSaveError) return false;
+        try {
+          if (sharePoint) {
+            const baseTopics = copy(state.baseTopics);
+            const localTopics = copy(topics);
+            const baseSheets = [...state.baseSheets];
+            const localSheets = [...sheets];
+            for (let attempt = 0; attempt < 3; attempt++) {
+              const remote = await readSharePointData();
+              const result = remote.etag === state.remoteEtag
+                ? { topics: localTopics, conflicts: [] }
+                : mergeTopics(baseTopics, localTopics, remote.data.topics);
+              if (result.conflicts.length) {
+                const conflictIds = new Set(result.conflictIds);
+                const mergedTopics = new Map(result.topics.map(topic => [topic.id, topic]));
+                localTopics.forEach(topic => {
+                  if (conflictIds.has(topic.id) && !mergedTopics.has(topic.id)) mergedTopics.set(topic.id, topic);
+                });
+                conflictIds.forEach(id => {
+                  if (!localTopics.some(topic => topic.id === id)) mergedTopics.delete(id);
+                });
+                state.topics = [...mergedTopics.values()];
+                state.sheets = uniqueNames([...remote.data.sheets, ...localSheets]);
+                state.baseTopics = copy(remote.data.topics);
+                state.baseSheets = [...remote.data.sheets];
+                state.remoteEtag = null;
+                state.pendingRemoteEtag = null;
+                try {
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    version: 1, updatedAt: new Date().toISOString(),
+                    sheets: state.sheets, topics: state.topics
+                  }));
+                  state.cacheWarning = null;
+                } catch (error) {
+                  state.cacheWarning = error.message;
+                }
+                render();
+                if ($('topicId').value && conflictIds.has($('topicId').value)) editTopic($('topicId').value);
+                throw new Error(`Aynı konu başka kullanıcı tarafından değiştirilmiş: ${uniqueNames(result.conflicts).join(', ')}. Diğer kayıtlar birleştirildi; formdaki değerleri kontrol edip tekrar kaydedin.`);
+              }
+              const mergedSheets = uniqueNames([...remote.data.sheets, ...localSheets]);
+              const content = JSON.stringify({
+                version: 1, updatedAt: new Date().toISOString(),
+                sheets: mergedSheets, topics: result.topics
+              }, null, 2);
+              try {
+                await backupSharePointFile(remote.raw);
+                await saveSharePointFile(content, remote.etag);
+                const saved = await readSharePointData();
+                state.topics = saved.data.topics;
+                state.sheets = saved.data.sheets;
+                state.baseTopics = copy(saved.data.topics);
+                state.baseSheets = [...saved.data.sheets];
+                state.remoteEtag = saved.etag;
+                state.pendingRemoteEtag = null;
+                state.syncError = null;
+                state.localFallbackLoaded = false;
+                state.projectStorage = true;
+                setStorageLabel();
+                try {
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    version: 1, updatedAt: new Date().toISOString(),
+                    sheets: saved.data.sheets, topics: saved.data.topics
+                  }));
+                  state.cacheWarning = null;
+                } catch (error) {
+                  state.cacheWarning = error.message;
+                }
+                render();
+                return true;
+              } catch (error) {
+                if (error.name !== 'VersionConflictError' || attempt === 2) throw error;
+              }
+            }
+            throw new Error('Dosya değişiklikleri art arda çakıştı; tekrar deneyin.');
+          }
+          if (state.backend === 'localApi') {
+            let saved = false;
+            const original = copy(topics);
+            const base = copy(state.baseTopics);
+            for (let attempt = 0; attempt < 3; attempt++) {
+              const currentResponse = await fetch('/api/data', {cache:'no-store'});
+              if (!currentResponse.ok) throw new Error('Güncel veri okunamadı');
+              const remote = validateData(await currentResponse.json());
+              const etag = currentResponse.headers.get('ETag');
+              const merged = mergeTopics(base, original, remote.topics);
+              if (merged.conflicts.length) throw new Error('Aynı alan başka kullanıcı tarafından değiştirildi. Taslağınız korunuyor; JSON taslağını indirip güncel veriyi açın ve farkları uzlaştırın');
+              topics = merged.topics;
+              sheets = uniqueNames([...remote.sheets, ...sheets]);
+              const operationId=crypto.randomUUID();
+              uncertainWrite={operationId, grid:gridSaving};
+              const response = await fetch('/api/data', {
+                method:'PUT', headers:{'Content-Type':'application/json','If-Match':etag,'Idempotency-Key':operationId},
+                body:JSON.stringify({...payload, topics, sheets})
+              });
+              if (response.status === 412) { uncertainWrite=null; continue; }
+              if (!response.ok) {
+                const errorBody=await response.json();
+                if(response.status<500) uncertainWrite=null;
+                throw new Error(errorBody.error||`Kayıt tamamlanmadı (${response.status})`);
+              }
+              uncertainWrite=null;
+              saved = true; state.remoteEtag = response.headers.get('ETag'); break;
+            }
+            if (!saved) throw new Error('Eş zamanlı kayıt yoğunluğu; yeniden deneyin');
+            state.baseTopics = copy(topics);
+            state.baseSheets = [...sheets];
+            state.projectStorage = true;
+          } else {
+            state.baseTopics = copy(topics);
+            state.baseSheets = [...sheets];
+            state.projectStorage = false;
+          }
+          state.topics = copy(topics);
+          state.sheets = [...sheets];
+          setStorageLabel();
+          return true;
+        } catch (error) {
+          if (!sharePoint && state.backend !== 'localApi') {
+            state.projectStorage = false;
+            setStorageLabel();
+          }
+          announce(`Kayıt tamamlanamadı: ${error.message}. Değişiklikler kaydedilene kadar bu sekmeyi kapatmayın.`, 'error');
+          return false;
+        } finally { state.saving = false; lockUncertainUI(); }
+      }
+
+      async function loadData() {
+        if(location.protocol==='file:') {
+          state.backend='browser';state.projectStorage=false;setStorageLabel();render();
+          document.querySelector('.layout').inert=true;
+          announce('Bu ekranı doğrudan HTML dosyasından açmayın. Aynı klasördeki IsTakip.exe dosyasına çift tıklayın; ortak veri bağlantısı otomatik açılacaktır.','error');
+          return;
+        }
+        try {
+          if (sharePoint) {
+            state.backend = 'sharePoint';
+            const remote = await readSharePointData();
+            state.topics = remote.data.topics;
+            state.sheets = remote.data.sheets;
+            state.baseTopics = copy(state.topics);
+            state.baseSheets = [...state.sheets];
+            state.remoteEtag = remote.etag;
+            state.localFallbackLoaded = false;
+          } else {
+            state.backend = location.protocol === 'http:' || location.protocol === 'https:' ? 'localApi' : 'browser';
+            const response = await fetch('/api/data', { cache: 'no-store' });
+            if (!response.ok) throw new Error(`Sunucu ${response.status} yanıtı verdi`);
+            const raw = await response.json();
+            if(raw.recoveryWarning) announce(raw.recoveryWarning, 'info');
+            const data = validateData(raw);
+            state.remoteEtag = response.headers.get('ETag');
+            state.topics = data.topics;
+            state.sheets = data.sheets;
+            state.baseTopics = copy(state.topics);
+            state.baseSheets = [...state.sheets];
+            state.localFallbackLoaded = state.topics.length > 0 || state.sheets.length > 1;
+          }
+          state.projectStorage = true;
+          setStorageLabel();
+        } catch (error) {
+          state.projectStorage = false;
+          setStorageLabel();
+          announce(`Ortak veri okunamadı: ${error.message}. Ağ bağlantısını ve klasör iznini kontrol edin.`, 'error');
+        }
+        render();
+        if (sharePoint) {
+          window.setInterval(refreshSharePointData, 15000);
+          window.addEventListener('focus', refreshSharePointData);
+        }
+      }
+
+      async function refreshSharePointData() {
+        if (!sharePoint || document.hidden) return;
+        try {
+          const remote = await readSharePointData();
+          if (remote.etag === state.remoteEtag) {
+            state.pendingRemoteEtag = null;
+            state.syncError = null;
+            state.projectStorage = true;
+            setStorageLabel();
+            return;
+          }
+          if (state.localFallbackLoaded) {
+            if (state.pendingRemoteEtag !== remote.etag) {
+              announce('SharePoint bağlantısı geri geldi ancak bu sekmede yerel yedek verisi var. Veriyi korumak için otomatik yenileme durduruldu; JSON yedeği alın ve ortak dosyayı yüklemek için sayfayı yenileyin.', 'warning');
+            }
+            state.pendingRemoteEtag = remote.etag;
+            return;
+          }
+          if (form.dataset.dirty === 'true' || $('topicId').value) {
+            if (state.pendingRemoteEtag !== remote.etag) {
+              announce('Başka bir kullanıcı ortak dosyayı güncelledi. Kaydettiğinizde değişiklikler birleştirilecek; aynı konuya çakışan düzenleme varsa uyarı alırsınız.', 'info');
+            }
+            state.pendingRemoteEtag = remote.etag;
+            return;
+          }
+          state.topics = remote.data.topics;
+          state.sheets = remote.data.sheets;
+          state.baseTopics = copy(remote.data.topics);
+          state.baseSheets = [...remote.data.sheets];
+          state.remoteEtag = remote.etag;
+          state.pendingRemoteEtag = null;
+          state.syncError = null;
+          state.projectStorage = true;
+          setStorageLabel();
+          render();
+        } catch (error) {
+          state.projectStorage = false;
+          setStorageLabel();
+          if (state.syncError !== error.message) announce(`SharePoint senkronizasyonu başarısız: ${error.message}`, 'error');
+          state.syncError = error.message;
+        }
+      }
+
+      function validateData(data) {
+        if (!data || !Array.isArray(data.topics)) throw new Error('JSON içinde topics dizisi bulunamadı.');
+        if (data.topics.length > 10000) throw new Error('En fazla 10.000 konu yüklenebilir.');
+        const topics = data.topics.map(item => {
+          if (!item || typeof item.topic !== 'string' || !item.topic.trim()) throw new Error('Bir konu kaydında konu adı eksik.');
+          return {
+            id: String(item.id || crypto.randomUUID()),
+            sheet: String(item.sheet || 'Konular'),
+            topic: item.topic.trim(),
+            service: String(item.service || ''),
+            owner: String(item.owner || ''),
+            topicType: String(item.topicType || ''),
+            priority: priorityValue(item.priority),
+            status: normalizeStatus(item.status),
+            closingDate: String(item.closingDate || ''),
+            current: String(item.current || ''),
+            updates: Array.isArray(item.updates) ? item.updates.map((update, index) => ({
+              id: String(update.id || `legacy-${index}-${update.date || ''}-${update.note || ''}`),
+              date: String(update.date || ''),
+              note: String(update.note || '')
+            })) : []
+          };
+        });
+        const sheets = uniqueNames([...(Array.isArray(data.sheets) ? data.sheets : []), ...topics.map(topic => topic.sheet)]);
+        const canonicalSheets = sheets.length ? sheets : ['Konular'];
+        if (canonicalSheets.length > 200) throw new Error('En fazla 200 sayfa kullanılabilir.');
+        if (canonicalSheets.some(sheet => sheet.length > 31 || /[\\/:*?\[\]]/.test(sheet))) {
+          throw new Error('Sayfa adları 31 karakteri aşamaz ve \\/:*?[] karakterlerini içeremez.');
+        }
+        topics.forEach(topic => {
+          topic.sheet = canonicalSheets.includes(topic.sheet) ? topic.sheet : 'Konular';
+        });
+        return { topics, sheets: canonicalSheets };
+      }
+
+      function render() {
+        updateFormBadgeColors();
+        const services = uniqueNames(state.topics.flatMap(topic => parseServiceTags(topic.service))).sort((a, b) => a.localeCompare(b, 'tr'));
+        if (form.dataset.dirty !== 'true' && !$('topicId').value) {
+          serviceTags = parseServiceTags($('service').value);
+          renderServiceTags();
+        }
+        const priorService = $('serviceFilter').value;
+        const preserveFormSheet = form.dataset.dirty === 'true' || Boolean($('topicId').value);
+        const priorTopicSheet = $('topicSheet').value;
+        $('topicSheet').innerHTML = state.sheets.map(sheet => `<option value="${escapeHtml(sheet)}">${escapeHtml(sheet)}</option>`).join('');
+        $('topicSheet').value = preserveFormSheet && state.sheets.includes(priorTopicSheet)
+          ? priorTopicSheet
+          : (state.activeSheet !== 'all' && state.sheets.includes(state.activeSheet) ? state.activeSheet : state.sheets[0]);
+        $('sheetBar').innerHTML = `<button class="sheet-tab ${state.activeSheet === 'all' ? 'active' : ''}" type="button" data-sheet="all">Tüm sayfalar <span>${state.topics.length}</span></button>` +
+          state.sheets.map(sheet => `<button class="sheet-tab ${state.activeSheet === sheet ? 'active' : ''}" type="button" data-sheet="${escapeHtml(sheet)}">${escapeHtml(sheet)} <span>${state.topics.filter(topic => topic.sheet === sheet).length}</span></button>`).join('') +
+          '<button class="sheet-tab add" type="button" id="newSheetBtn">+ Yeni sayfa</button>';
+        $('serviceFilter').innerHTML = '<option value="">Tüm servisler</option>' + services.map(service => `<option value="${escapeHtml(service)}">${escapeHtml(service)}</option>`).join('');
+        if (services.includes(priorService)) $('serviceFilter').value = priorService;
+        serviceOptions.innerHTML = services.map(service => `<option value="${escapeHtml(service)}"></option>`).join('');
+        const filtered = getFilteredTopics();
+        const activeFilters = [
+          quickFilter !== 'all' ? document.querySelector('[data-quick].active')?.textContent : '',
+          state.activeSheet !== 'all' ? `Sayfa: ${state.activeSheet}` : '',
+          $('statusFilter').value ? `Durum: ${$('statusFilter').value}` : '',
+          $('priorityFilter').value ? `Önem: ${$('priorityFilter').value === 'none' ? 'belirtilmedi' : $('priorityFilter').value}` : '',
+          $('serviceFilter').value ? `Servis: ${$('serviceFilter').value}` : '',
+          $('searchInput').value.trim() ? `Arama: ${$('searchInput').value.trim()}` : ''
+        ].filter(Boolean);
+        $('activeFilterSummary').textContent = activeFilters.length ? activeFilters.join(' · ') : 'Tüm konular görüntüleniyor';
+        $('clearFiltersBtn').disabled = activeFilters.length === 0;
+        $('clearFiltersBtn').style.opacity = activeFilters.length ? '1' : '.55';
+        $('totalCount').textContent = state.topics.length;
+        $('activeCount').textContent = state.topics.filter(topic => topic.status === 'Aktif').length;
+        $('closedCount').textContent = state.topics.filter(topic => topic.status === 'Kapandı').length;
+        $('holdCount').textContent = state.topics.filter(topic => topic.status === 'Askıda').length;
+        $('resultCount').textContent = `${filtered.length} / ${state.topics.length} kayıt`;
+        renderGrid();
+      }
+
+      function getFilteredTopics() {
+        const query = norm($('searchInput').value);
+        const statusFilter = $('statusFilter').value;
+        const serviceFilter = $('serviceFilter').value;
+        const priorityFilter = $('priorityFilter').value;
+        return state.topics.filter(topic => {
+          const searchable = norm([topic.topic, topic.owner, topic.service, topic.topicType, topic.status, topic.priority, topic.closingDate, topic.current, ...topic.updates.map(update => update.note)].join(' '));
+          const priority = priorityValue(topic.priority);
+          return matchesQuickFilter(topic) && (!query || searchable.includes(query)) &&
+            (state.activeSheet === 'all' || topic.sheet === state.activeSheet) &&
+            (!statusFilter || topic.status === statusFilter) &&
+            (!priorityFilter || (priorityFilter === 'none' ? !priority : priority === priorityFilter)) &&
+            (!serviceFilter || parseServiceTags(topic.service).some(service => norm(service) === norm(serviceFilter)));
+        }).sort((a, b) => a.topic.localeCompare(b.topic, 'tr'));
+      }
+
+      function clearForm() {
+        $('topicDrawer').close();
+        form.reset();
+        $('topicId').value = '';
+        updateFormBadgeColors();
+        serviceTags = [];
+        renderServiceTags();
+        $('serviceTagInput').value = '';
+        $('topicSheet').value = state.activeSheet !== 'all' ? state.activeSheet : state.sheets[0];
+        $('formTitle').textContent = 'Yeni konu ekle';
+        $('saveTopicBtn').textContent = 'Konuyu kaydet';
+        $('cancelEditBtn').classList.add('hidden');
+        form.dataset.dirty = 'false';
+      }
+
+      function editTopic(id) {
+        const topic = state.topics.find(item => item.id === id);
+        if (!topic) return;
+        $('topicId').value = topic.id;
+        $('topicSheet').value = topic.sheet;
+        $('topic').value = topic.topic;
+        serviceTags = parseServiceTags(topic.service);
+        renderServiceTags();
+        $('serviceTagInput').value = '';
+        $('owner').value = topic.owner || ''; 
+        $('topicType').value = topic.topicType;
+        $('priority').value = topic.priority;
+        $('status').value = topic.status;
+        updateFormBadgeColors();
+        const calendarDate = calendarDateValue(topic.closingDate);
+        $('closingDate').value = calendarDate;
+        $('closingDateNote').value = calendarDate ? '' : topic.closingDate;
+        $('current').value = latestUpdate(topic)?.note || topic.current;
+        $('formTitle').textContent = 'Konuyu düzenle';
+        $('saveTopicBtn').textContent = 'Değişiklikleri kaydet';
+        $('cancelEditBtn').classList.remove('hidden');
+        form.dataset.dirty = 'false';
+        if (!$('topicDrawer').open) $('topicDrawer').showModal();
+        $('topic').focus();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function openWeeklyUpdate(id) {
+        if (gridDrafts.size) return announce('Önce tablodaki değişiklikleri kaydedin veya geri alın.', 'error');
+        const topic = state.topics.find(item => item.id === id);
+        if (!topic) return;
+        const today = localDate();
+        $('weeklyDialog').dataset.topicId = topic.id;
+        $('weeklyDialog').dataset.date = today;
+        $('weeklyTopicTitle').textContent = topic.topic;
+        $('weeklyWeekRange').value = weekRangeLabel(today);
+        $('weeklyExactDate').value = updateDateLabel(today);
+        $('weeklyNote').value = '';
+        $('weeklyDialog').showModal();
+        $('weeklyNote').focus();
+      }
+
+      $('weeklyForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        const dialog = $('weeklyDialog');
+        const today = localDate();
+        if (dialog.dataset.date !== today) {
+          dialog.dataset.date = today;
+          $('weeklyWeekRange').value = weekRangeLabel(today);
+          $('weeklyExactDate').value = updateDateLabel(today);
+          announce('Tarih değişti; güncel haftayı kontrol edip yeniden kaydedin.', 'info');
+          return;
+        }
+        const topic = state.topics.find(item => item.id === dialog.dataset.topicId);
+        const note = $('weeklyNote').value.trim();
+        if (!topic || !note) return;
+        const updated = {
+          ...topic,
+          current: note,
+          updates: [...topic.updates, { id: crypto.randomUUID(), date: today, note }]
+        };
+        const topics = state.topics.map(item => item.id === topic.id ? updated : item);
+        const button = $('saveWeeklyBtn');
+        button.disabled = true;
+        try {
+          if (await persist(topics, state.sheets)) {
+            dialog.close();
+            render();
+            announceSaved(`Haftalık güncelleme eklendi: ${weekRangeLabel(today)}. Eklenme tarihi: ${updateDateLabel(today)}.`);
+          }
+        } finally {
+          button.disabled = false;
+        }
+      });
+      $('cancelWeeklyBtn').addEventListener('click', () => $('weeklyDialog').close());
+
+      form.addEventListener('submit', async event => {
+        event.preventDefault();
+        const id = $('topicId').value;
+        const old = state.topics.find(item => item.id === id);
+        const updates = old ? [...old.updates] : [];
+        const currentInput = $('current').value.trim();
+        const previousCurrent = old ? (latestUpdate(old)?.note || old.current) : '';
+        if (currentInput && currentInput !== previousCurrent) {
+          updates.push({ id: crypto.randomUUID(), date: localDate(), note: currentInput });
+        }
+        const latestNote = orderedUpdates(updates).at(-1)?.note || '';
+        const topic = {
+          id: old?.id || crypto.randomUUID(),
+          sheet: $('topicSheet').value,
+          topic: $('topic').value.trim(),
+          service: serviceTags.join(', '),
+          owner: $('owner').value.trim(),
+          topicType: $('topicType').value.trim(),
+          priority: $('priority').value,
+          status: $('status').value,
+          closingDate: $('closingDate').value || $('closingDateNote').value.trim(),
+          current: latestNote || currentInput,
+          updates
+        };
+        const topics = old
+          ? state.topics.map(item => item.id === id ? topic : item)
+          : [...state.topics, topic];
+        const button = $('saveTopicBtn');
+        button.disabled = true;
+        try {
+          if (await persist(topics, state.sheets)) {
+            clearForm();
+            render();
+            announceSaved(old ? 'Konu güncellendi.' : 'Konu kaydedildi.');
+          }
+        } finally {
+          button.disabled = false;
+        }
+      });
+
+      $('cancelEditBtn').addEventListener('click', clearForm);
+      $('resetFormBtn').addEventListener('click', () => { if(form.dataset.dirty !== 'true' || confirm('Formdaki kaydedilmemiş bilgiler temizlensin mi?')) clearForm(); });
+      $('searchInput').addEventListener('input', render);
+      $('priority').addEventListener('change', updateFormBadgeColors);
+      $('status').addEventListener('change', updateFormBadgeColors);
+      $('closingDate').addEventListener('change', () => {
+        if ($('closingDate').value) $('closingDateNote').value = '';
+        form.dataset.dirty = 'true';
+      });
+      $('closingDateNote').addEventListener('input', () => {
+        if ($('closingDateNote').value.trim()) $('closingDate').value = '';
+      });
+      $('statusFilter').addEventListener('change', render);
+      $('priorityFilter').addEventListener('change', render);
+      $('serviceFilter').addEventListener('change', render);
+      $('clearFiltersBtn').addEventListener('click', () => {
+        quickFilter = 'all';
+        document.querySelectorAll('[data-quick]').forEach(b=>b.classList.toggle('active',b.dataset.quick==='all'));
+        state.activeSheet = 'all';
+        $('searchInput').value = '';
+        $('statusFilter').value = '';
+        $('priorityFilter').value = '';
+        $('serviceFilter').value = '';
+        render();
+      });
+      form.addEventListener('input', () => { form.dataset.dirty = 'true'; });
+      $('serviceTagInput').addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ',') {
+          event.preventDefault();
+          commitServiceEntry();
+          form.dataset.dirty = 'true';
+        }
+      });
+      $('serviceTagInput').addEventListener('change', () => {
+        commitServiceEntry();
+        form.dataset.dirty = 'true';
+      });
+      $('serviceTagInput').addEventListener('blur', commitServiceEntry);
+      $('serviceTags').addEventListener('click', event => {
+        const removeButton = event.target.closest('[data-remove-service]');
+        if (!removeButton) return;
+        serviceTags.splice(Number(removeButton.dataset.removeService), 1);
+        renderServiceTags();
+        form.dataset.dirty = 'true';
+      });
+      $('topicSheet').addEventListener('change', () => {
+        state.activeSheet = $('topicSheet').value;
+        render();
+      });
+      $('sheetBar').addEventListener('click', async event => {
+        if (event.target.id === 'newSheetBtn') {
+          $('newSheetName').value = '';
+          $('sheetDialog').showModal();
+          $('newSheetName').focus();
+          return;
+        }
+        const tab = event.target.closest('[data-sheet]');
+        if (!tab) return;
+        state.activeSheet = tab.dataset.sheet;
+        render();
+      });
+      $('cancelSheetBtn').addEventListener('click', () => $('sheetDialog').close());
+      $('sheetForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        const name = $('newSheetName').value.trim();
+        if (!name || name.length > 31 || /[\\/:*?\[\]]/.test(name)) {
+          announce('Sayfa adı boş olamaz ve \\/:*?[] karakterlerini içeremez.', 'error');
+          return;
+        }
+        if (state.sheets.some(sheet => norm(sheet) === norm(name))) {
+          announce('Bu adla bir sayfa zaten var.', 'error');
+          return;
+        }
+        if (state.sheets.length >= 200) {
+          announce('En fazla 200 sayfa oluşturabilirsiniz.', 'error');
+          return;
+        }
+        if (await persist(state.topics, [...state.sheets, name])) {
+          state.activeSheet = name;
+          $('sheetDialog').close();
+          clearForm();
+          render();
+          $('topic').focus();
+          announceSaved(`"${name}" sayfası oluşturuldu.`);
+        }
+      });
+      $('importExcelBtn').addEventListener('click', () => $('excelFile').click());
+      $('restoreBtn').addEventListener('click', () => $('jsonFile').click());
+      $('exportExcelBtn').addEventListener('click', exportExcel);
+      $('htmlReportBtn').addEventListener('click', openHtmlReport);
+      $('backupBtn').addEventListener('click', downloadBackup);
+
+      function normalizeHeader(header) {
+        return norm(header).replace(/[^a-z0-9]/g, '');
+      }
+      function excelColumns(row) {
+        const headers=row.map(normalizeHeader), used=new Set();
+        const take=predicate=>{const index=headers.findIndex((header,i)=>!used.has(i)&&predicate(header));if(index>=0)used.add(index);return index;};
+        const indices={};
+        indices.service=take(h=>(h.includes('etkilenen')&&h.includes('servis'))||['servis','service'].includes(h));
+        indices.topicType=take(h=>(h.includes('konu')&&h.includes('tip'))||h==='topictype');
+        indices.closingDate=take(h=>(h.includes('planlanan')&&h.includes('kapan'))||h.includes('kapanistarihi')||h==='closingdate');
+        indices.current=take(h=>h.includes('guncel')||h.includes('current'));
+        indices.status=take(h=>h.includes('durum')||h==='status');
+        indices.priority=take(h=>h.includes('onem')||h.includes('oncelik')||h==='priority');
+        indices.owner=take(h=>h==='sorumlu'||h==='sorumlukisi'||h==='owner');
+        indices.topic=take(h=>h.includes('konu')||h==='topic'||h==='baslik');
+        return {indices,used,score:used.size};
+      }
+      function excelDateText(value) {
+        if(value instanceof Date&&!Number.isNaN(value.getTime())) return `${value.getFullYear()}-${String(value.getMonth()+1).padStart(2,'0')}-${String(value.getDate()).padStart(2,'0')}`;
+        if(typeof value==='number') {
+          const parsed=XLSX.SSF.parse_date_code(value);
+          if(parsed)return `${parsed.y}-${String(parsed.m).padStart(2,'0')}-${String(parsed.d).padStart(2,'0')}`;
+        }
+        const text=String(value??'').trim();
+        const match=text.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+        return match?`${match[3]}-${match[2].padStart(2,'0')}-${match[1].padStart(2,'0')}`:text;
+      }
+      function readExcelRows(rows, sheetName) {
+        if(rows.length<2||!rows.some(row=>row.some(cell=>String(cell??'').trim()))) return [];
+        let headerIndex=-1, mapping=null;
+        rows.slice(0,30).forEach((row,i)=>{
+          const candidate=excelColumns(row);
+          if(candidate.indices.topic>=0&&(!mapping||candidate.score>mapping.score)){mapping=candidate;headerIndex=i;}
+        });
+        if(!mapping)throw new Error(`"${sheetName}" sayfasında Konu/Başlık sütunu bulunamadı. Veri değiştirilmedi.`);
+        const {indices,used}=mapping;
+        const weeklyColumns=rows[headerIndex].map((header,index)=>({header,index})).filter(column=>!used.has(column.index));
+        const text=(row,index)=>index>=0?String(row[index]??'').trim():'';
+        return rows.slice(headerIndex+1).filter(row=>text(row,indices.topic)).map(row=>({
+          id:crypto.randomUUID(),sheet:sheetName,
+          topic:text(row,indices.topic),service:text(row,indices.service),owner:text(row,indices.owner),
+          topicType:text(row,indices.topicType),priority:priorityValue(text(row,indices.priority)),
+          status:normalizeStatus(text(row,indices.status)),closingDate:excelDateText(indices.closingDate>=0?row[indices.closingDate]:''),
+          current:text(row,indices.current),
+          updates:weeklyColumns.map(column=>({id:crypto.randomUUID(),date:column.header instanceof Date?excelDateText(column.header):String(column.header??''),note:text(row,column.index)})).filter(update=>update.note)
+        }));
+      }
+
+      $('excelFile').addEventListener('change', event => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+        if (!window.XLSX) return announce('Excel kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin.', 'error');
+        const reader = new FileReader();
+        reader.onerror = () => announce('Excel dosyası okunamadı.', 'error');
+        reader.onload = async loadEvent => {
+          try {
+            const workbook = XLSX.read(new Uint8Array(loadEvent.target.result), { type: 'array', cellDates: true });
+            const imported = workbook.SheetNames.flatMap(sheetName =>
+              readExcelRows(XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '' }), sheetName)
+            );
+            const importedSheets = workbook.SheetNames.filter(name=>imported.some(topic=>topic.sheet===name));
+            if (!importedSheets.length || !imported.length) throw new Error('Aktarılabilecek konu bulunamadı. Mevcut veriler değiştirilmedi.');
+            const importedKeys = new Set(importedSheets);
+            const replacedCount = state.topics.filter(topic => importedKeys.has(topic.sheet)).length;
+            if (!window.confirm(`${importedSheets.length} Excel sayfası ve ${imported.length} konu bulundu. Aynı adlı mevcut sayfaların içeriği Excel verisiyle değiştirilecek (${replacedCount} konu); diğer sayfalar korunacak. Devam edilsin mi?`)) return;
+            const topics = [
+              ...state.topics.filter(topic => !importedKeys.has(topic.sheet)),
+              ...imported
+            ];
+            const sheets = uniqueNames([...state.sheets.filter(sheet => !importedKeys.has(sheet)), ...importedSheets]);
+            if (await persist(topics, sheets)) {
+              state.activeSheet = importedSheets[0];
+              render();
+              announce(`${importedSheets.length} Excel sayfası ve ${imported.length} konu içe aktarıldı.`, 'success');
+            }
+          } catch (error) {
+            announce(`Excel içe aktarılamadı: ${error.message}`, 'error');
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      });
+
+      function exportExcel() {
+        if (!state.sheets.length) return announce('Dışa aktarılacak sayfa bulunmuyor.', 'error');
+        if (!window.XLSX) return announce('Excel kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin.', 'error');
+        try {
+          const workbook = buildWorkbook();
+          XLSX.writeFile(workbook, `haftalik-rapor-v3-${localDate()}.xlsx`);
+          announce('Excel dosyası indirilmeye hazır.', 'success');
+        } catch (error) {
+          announce(`Excel çıktısı oluşturulamadı: ${error.message}`, 'error');
+        }
+      }
+
+      function weeklyLabel(update) {
+        if (!update.date) return 'Haftalık Güncelleme';
+        return weekRangeLabel(update.date) || update.date;
+      }
+
+      function weeklyNotes(topic) {
+        const notes = new Map();
+        topic.updates.forEach(update => {
+          const label = weeklyLabel(update);
+          const note = `${updateDateLabel(update.date)}: ${update.note}`;
+          notes.set(label, [...(notes.get(label) || []), note].filter(Boolean).join('\n\n'));
+        });
+        return notes;
+      }
+
+      function buildWorkbook() {
+        const workbook = XLSX.utils.book_new();
+        state.sheets.forEach(sheet => {
+          const sheetTopics = state.topics.filter(topic => topic.sheet === sheet);
+          const labels = orderedWeeklyLabels(sheetTopics.flatMap(topic => topic.updates.map(weeklyLabel)));
+          const matrix = [[
+            'Konu', 'Etkilenen Servis', 'Konu Tipi', 'Planlanan Kapanış Tarihi',
+            'Önem', 'Durum', 'Güncel Durum (Son Hafta)', ...labels
+          ]];
+          sheetTopics.forEach(topic => {
+            const notes = weeklyNotes(topic);
+            matrix.push([
+              topic.topic, topic.service, topic.topicType, formatDate(topic.closingDate),
+              topic.priority, topic.status, topic.current,
+              ...labels.map(label => notes.get(label) || '')
+            ]);
+          });
+          XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(matrix), sheet.slice(0, 31));
+        });
+        return workbook;
+      }
+
+      function openHtmlReport() {
+        const selectedTopics = getFilteredTopics();
+        if (!selectedTopics.length) return announce('Seçili filtrelerde yönetici raporuna girecek konu yok.', 'error');
+        const selectedSheets = state.sheets.filter(name => selectedTopics.some(topic => topic.sheet === name));
+        const sheets = selectedSheets.map(name => {
+          const topics = selectedTopics.filter(topic => topic.sheet === name);
+          const labels = orderedWeeklyLabels(topics.flatMap(topic => topic.updates.map(weeklyLabel)));
+          const data = [[
+            'Konu', 'Etkilenen Servis', 'Konu Tipi', 'Planlanan Kapanış Tarihi',
+            'Önem', 'Durum', 'Güncel Durum (Son Hafta)', ...labels
+          ]];
+          topics.forEach(topic => {
+            const notes = weeklyNotes(topic);
+            data.push([
+              topic.topic, topic.service, topic.topicType, formatDate(topic.closingDate),
+              topic.priority, topic.status, topic.current, ...labels.map(label => notes.get(label) || '')
+            ]);
+          });
+          return { name, data };
+        });
+        try {
+          sessionStorage.setItem(REPORT_KEY, JSON.stringify({ sheets }));
+        } catch (error) {
+          return announce(`HTML rapor verisi hazırlanamadı: ${error.message}`, 'error');
+        }
+        const reportUrl = new URL('../haftalik-rapor-v2.html?from=v3-manager', location.href);
+        const reportWindow = window.open(reportUrl.href, '_blank');
+        if (!reportWindow) {
+          announce('Tarayıcı yeni sekmeyi engelledi. Açılır pencere izni verip tekrar deneyin.', 'error');
+          return;
+        }
+        announce(`${selectedTopics.length} konu için v2 yönetici raporu hazırlanıyor.`, 'success');
+      }
+
+      function downloadBackup() {
+        const backup = { version: 1, exportedAt: new Date().toISOString(), sheets: state.sheets, topics: state.topics };
+        const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `haftalik-rapor-v3-yedek-${localDate()}.json`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      $('jsonFile').addEventListener('change', event => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onerror = () => announce('JSON yedek dosyası okunamadı.', 'error');
+        reader.onload = async loadEvent => {
+          try {
+            const restored = validateData(JSON.parse(loadEvent.target.result));
+            if (!window.confirm(`${restored.sheets.length} sayfa ve ${restored.topics.length} konu yüklenecek; mevcut kayıtlar değiştirilecek. Devam edilsin mi?`)) return;
+            if (await persist(restored.topics, restored.sheets)) {
+              state.activeSheet = 'all';
+              render();
+              announceSaved('Yedek geri yüklendi.');
+            }
+          } catch (error) {
+            announce(`Yedek yüklenemedi: ${error.message}`, 'error');
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      const gridDrafts = new Map();
+      const expandedHistory = new Set();
+      let gridSaving = false;
+      let autosaveTimer, saveFailed = false, quickFilter = 'all';
+      let uncertainWrite=null;
+      function lockUncertainUI() {
+        document.querySelector('.layout').inert=Boolean(uncertainWrite);
+        $('checkCommit').hidden=!uncertainWrite;
+        if(uncertainWrite) announce('Kayıt sonucu henüz doğrulanamadı. Taslağınız ekranda korunuyor; İşlem sonucunu denetle düğmesine basın.','error');
+      }
+      const checkCommit=document.createElement('button');checkCommit.id='checkCommit';checkCommit.className='button primary';checkCommit.hidden=true;checkCommit.textContent='İşlem sonucunu denetle';
+      document.querySelector('.workbar').append(checkCommit);
+      checkCommit.onclick=async()=>{
+        if(!uncertainWrite)return;
+        checkCommit.disabled=true;
+        try {
+          const response=await fetch('/api/receipt?id='+encodeURIComponent(uncertainWrite.operationId),{cache:'no-store'});
+          if(!response.ok)throw new Error('Ortak klasöre erişilemiyor.');
+          const receipt=await response.json();
+          if(receipt.committed) {
+            const current=await fetch('/api/data',{cache:'no-store'});
+            if(!current.ok)throw new Error('Güncel veri okunamadı.');
+            const data=validateData(await current.json());
+            state.topics=data.topics;state.sheets=data.sheets;state.baseTopics=copy(data.topics);state.baseSheets=[...data.sheets];state.remoteEtag=current.headers.get('ETag');
+            if(uncertainWrite.grid)gridDrafts.clear();else clearForm();
+            uncertainWrite=null;render();announce('İşlem ortak dosyaya kaydedilmiş. Güncel veri yüklendi.','success');
+          } else {uncertainWrite=null;announce('İşlem kaydedilmemiş. Taslağınız korunuyor; yeniden kaydedebilirsiniz.','info');}
+          lockUncertainUI();
+        } catch(error) {announce(error.message+' Sonuç doğrulanana kadar sekmeyi kapatmayın.','error');}
+        finally {checkCommit.disabled=false;}
+      };
+      const columns = [
+        ['topic','Konu',240], ['service','Etkilenen servisler',160], ['topicType','Proje / Talep',100],
+        ['closingDate','Proje kapanış tarihi',10], ['owner','Sorumlu',160],
+        ['priority','Önem',1], ['status','Durum',20], ['current','Güncel durum / sonraki adım',2000]
+      ];
+      function gridValue(topic, field) {
+        const draft=gridDrafts.get(topic.id);
+        if(draft?.[field]!==undefined) return draft[field];
+        if(field==='current') return latestUpdate(topic)?.note || topic[field] || '';
+        return topic[field] ?? '';
+      }
+      function renderGrid() {
+        const filtered = getFilteredTopics();
+        $('gridWrap').classList.toggle('hidden', filtered.length === 0);
+        $('emptyState').classList.toggle('hidden', filtered.length > 0);
+        [...$('gridWrap').querySelectorAll('details[data-history-id][open]')].forEach(details => expandedHistory.add(details.dataset.historyId));
+        const header='<thead><tr><th></th><th>#</th>'+columns.map(column=>`<th>${column[1]}</th>`).join('')+'<th>Haftalık geçmiş</th><th>İşlem</th></tr></thead>';
+        const rows=filtered.map((topic,rowIndex)=>{
+          const draft=gridDrafts.get(topic.id)||{};
+          const latest=latestUpdate(topic);
+          const updates=orderedUpdates(topic.updates).reverse();
+          const contextValue=value=>escapeHtml(value||'Belirtilmedi');
+          const closingValue=topic.closingDate?updateDateLabel(topic.closingDate):'Belirtilmedi';
+          const history=updates.length
+            ? `<details class="history combined-history" data-history-id="${escapeHtml(topic.id)}" ${expandedHistory.has(topic.id)?'open':''}><summary>${updates.length} kayıt · Son: ${escapeHtml(weeklyLabel(latest))}</summary><div class="history-context"><div class="history-context-row"><span class="history-context-label">Etkilenen servisler</span><span>${contextValue(parseServiceTags(topic.service).join(', '))}</span></div><div class="history-context-row"><span class="history-context-label">Proje / Talep</span><span>${contextValue(topic.topicType)}</span></div><div class="history-context-row"><span class="history-context-label">Planlanan kapanış</span><span>${escapeHtml(closingValue)}</span></div></div><ol class="history-list">${updates.map(item=>`<li><span class="history-date">${escapeHtml(weeklyLabel(item))}</span><span class="history-entry-date">Eklenme tarihi: ${escapeHtml(updateDateLabel(item.date))}</span>${escapeHtml(item.note)}</li>`).join('')}</ol></details>`
+            : '<span class="topic-meta">Henüz haftalık not yok</span>';
+          const cells=columns.map(([field,label,max],columnIndex)=>{
+            const rawValue=gridValue(topic,field);
+            const value=field==='closingDate'?calendarDateValue(rawValue):rawValue;
+            const attrs=`data-id="${escapeHtml(topic.id)}" data-field="${field}" data-row="${rowIndex}" data-col="${columnIndex}" aria-label="${escapeHtml(topic.topic)}: ${label}"`;
+            const choices=field==='priority'?['','1','2','3','4','5']:field==='status'?['Aktif','Askıda','Kapandı']:null;
+            const selectClass=field==='priority'?` class="grid-priority priority level-${escapeHtml(priorityValue(value)||'0')}"`:field==='status'?` class="grid-status status ${statusKind(value)}"`:'';
+            const input=choices
+              ? `<select${selectClass} ${attrs}>${choices.map(choice=>`<option value="${choice}" ${choice===value?'selected':''}>${choice||'—'}</option>`).join('')}</select>`
+              : `<input ${attrs} type="${field==='closingDate'?'date':'text'}" maxlength="${max}" value="${escapeHtml(value)}"${field==='service'?' placeholder="Virgülle ayırın"':''}>${field==='closingDate'&&rawValue&&!value?`<span class="legacy-closing-note">${escapeHtml(rawValue)}</span>`:''}`;
+            return `<td class="${draft[field]!==undefined?'changed':''}">${input}</td>`;
+          }).join('');
+          return `<tr><td><button class="button small weekly-add" type="button" data-weekly-add="${escapeHtml(topic.id)}" aria-label="${escapeHtml(topic.topic)} için haftalık güncelleme ekle" title="Haftalık güncelleme ekle">+</button></td><td>${rowIndex+1}</td>${cells}<td>${history}</td><td><div class="row-actions"><button class="button small" type="button" data-edit="${escapeHtml(topic.id)}">Düzenle</button><button class="button small danger" type="button" data-delete="${escapeHtml(topic.id)}" aria-label="${escapeHtml(topic.topic)} konusunu sil">Sil</button></div></td></tr>`;
+        }).join('');
+        $('gridWrap').innerHTML=`<table aria-label="Birleşik konu ve haftalık geçmiş tablosu">${header}<tbody>${rows}</tbody></table>`;
+        gridStatus();
+        const open=state.topics.filter(t=>t.status!=='Kapandı');
+        const late=open.filter(t=>/^\d{4}-\d{2}-\d{2}$/.test(t.closingDate)&&t.closingDate<localDate()).length;
+        const high=open.filter(t=>Number(t.priority)>=4).length;
+        const unassigned=open.filter(t=>!t.owner?.trim()).length;
+        $('insights').innerHTML=`<span><b>${late}</b> Hedef tarihi geçen açık konu</span><span><b>${high}</b> Yüksek öncelikli açık konu</span><span><b>${unassigned}</b> Sorumlusu eksik açık konu</span><span>Göstergeler kaydedilmiş tüm konuları kapsar.</span>`;
+      }
+      function gridStatus() {
+        $('gridStatus').textContent=gridSaving?'Kaydediliyor…':uncertainWrite?'Kayıt sonucu denetlenmeli':gridDrafts.size?(saveFailed?'Kaydedilemedi · taslak korunuyor · Şimdi kaydet ile yeniden deneyin':`${gridDrafts.size} satır değişti · hücreden çıkınca otomatik kaydedilir`):'✓ Tüm değişiklikler kaydedildi';
+        $('saveGrid').disabled=!gridDrafts.size||gridSaving;
+        $('discardGrid').disabled=!gridDrafts.size||gridSaving;
+      }
+      function changeCell(input, value) {
+        const original=state.topics.find(t=>t.id===input.dataset.id);
+        if (!original) return;
+        const field=input.dataset.field;
+        const draft={...(gridDrafts.get(original.id)||{})};
+        const originalValue=field==='current'?(latestUpdate(original)?.note||original.current||''):(original[field]||'');
+        if (value===originalValue) delete draft[field]; else draft[field]=value;
+        if (Object.keys(draft).length) gridDrafts.set(original.id,draft); else gridDrafts.delete(original.id);
+        if(field==='priority')input.className=`grid-priority priority level-${priorityValue(value)||'0'}`;
+        if(field==='status')input.className=`grid-status status ${statusKind(value)}`;
+        input.closest('td').classList.toggle('changed',draft[field]!==undefined);
+        gridStatus();
+      }
+      $('gridWrap').addEventListener('input',event=>{ if(event.target.dataset.field) changeCell(event.target,event.target.value); });
+      $('gridWrap').addEventListener('toggle',event=>{
+        const details=event.target;
+        if(details.matches('details[data-history-id]')) {
+          if(details.open)expandedHistory.add(details.dataset.historyId);
+          else expandedHistory.delete(details.dataset.historyId);
+        }
+      },true);
+      $('gridWrap').addEventListener('click',async event=>{
+        const weeklyButton=event.target.closest('[data-weekly-add]');
+        if(weeklyButton)return openWeeklyUpdate(weeklyButton.dataset.weeklyAdd);
+        const editButton=event.target.closest('[data-edit]');
+        if(editButton) {
+          if(gridDrafts.size)return announce('Önce tablodaki değişiklikleri kaydedin veya geri alın.','error');
+          if(form.dataset.dirty==='true')return announce('Önce formdaki değişiklikleri kaydedin veya Vazgeç ile kapatın.','error');
+          return editTopic(editButton.dataset.edit);
+        }
+        const deleteButton=event.target.closest('[data-delete]');
+        if(!deleteButton)return;
+        if(gridDrafts.size)return announce('Önce tablodaki değişiklikleri kaydedin veya geri alın.','error');
+        if(form.dataset.dirty==='true')return announce('Önce formdaki değişiklikleri kaydedin veya Vazgeç ile kapatın.','error');
+        const topic=state.topics.find(item=>item.id===deleteButton.dataset.delete);
+        if(!topic||!window.confirm(`"${topic.topic}" konusu silinsin mi?`))return;
+        const topics=state.topics.filter(item=>item.id!==topic.id);
+        if(await persist(topics,state.sheets)){render();announceSaved('Konu silindi.');}
+      });
+      $('gridWrap').addEventListener('paste',event=>{
+        const target=event.target;
+        if(!target.dataset.field) return;
+        const text=event.clipboardData.getData('text/plain');
+        if(!/[\t\r\n]/.test(text)) return;
+        event.preventDefault();
+        const matrix=text.replace(/\r/g,'').replace(/\n$/,'').split('\n').map(row=>row.split('\t'));
+        const visibleColumns=columns.map((_,i)=>i).filter(i=>!$('gridWrap').classList.contains('compact-columns')||![1,2].includes(i));
+        const startRow=Number(target.dataset.row), startCol=visibleColumns.indexOf(Number(target.dataset.col)), edits=[];
+        // Validate the whole paste before touching any draft cell.
+        for(let r=0;r<matrix.length;r++) for(let c=0;c<matrix[r].length;c++) {
+          const column=visibleColumns[startCol+c];
+          const input=$('gridWrap').querySelector(`[data-row="${startRow+r}"][data-col="${column}"]`);
+          if(!input) return announce('Yapıştırma görünür tablo sınırını aşıyor. Hiçbir hücre değiştirilmedi.','error');
+          let value=matrix[r][c].trim();
+          const field=input.dataset.field, max=columns[column][2];
+          if(field==='closingDate' && /^\d{2}\.\d{2}\.\d{4}$/.test(value)) value=value.split('.').reverse().join('-');
+          if(value.length>max || (field==='topic'&&!value) || (field==='closingDate'&&value&&!calendarDateValue(value)) || (field==='priority'&&!['','1','2','3','4','5'].includes(value)) || (field==='status'&&!['Aktif','Askıda','Kapandı'].includes(value))) return announce(`Yapıştırmada geçersiz ${columns[column][1]}. Hiçbir hücre değiştirilmedi.`,'error');
+          edits.push([input,value]);
+        }
+        edits.forEach(([input,value])=>{input.value=value;changeCell(input,value)});
+        announce(`${edits.length} hücre taslağa alındı. Hücreden çıkınca otomatik kaydedilecek.`);
+      });
+      $('discardGrid').onclick=()=>{ if(confirm('Kaydedilmemiş tablo değişiklikleri geri alınsın mı?')) {gridDrafts.clear();renderGrid();} };
+      $('saveGrid').onclick=saveGrid;
+      async function saveGrid(){
+        clearTimeout(autosaveTimer);
+        if(!gridDrafts.size||gridSaving||state.saving||uncertainWrite)return;
+        const focused=document.activeElement;
+        const focusId=focused?.dataset.id, focusField=focused?.dataset.field;
+        const caret=focused?.selectionStart;
+        if(form.dataset.dirty==='true') return announce('Önce soldaki formu tamamlayın veya Vazgeç ile kapatın.','error');
+        const topics=state.topics.map(t=>{
+          const draft=gridDrafts.get(t.id);
+          if(!draft) return t;
+          const result={...t,...draft,updates:[...t.updates]};
+          // One entry from the user's actual update; no invented weekly activity.
+          if(draft.current && draft.current!==(latestUpdate(t)?.note||t.current)) result.updates.push({id:crypto.randomUUID(),date:localDate(),note:draft.current});
+          result.current=latestUpdate(result)?.note || result.current;
+          return result;
+        });
+        if(topics.some(t=>!t.topic.trim())) return announce('Konu boş bırakılamaz.','error');
+        gridSaving=true;gridStatus();
+        $('gridWrap').inert=true;
+        try {
+          if(await persist(topics,state.sheets)) {gridDrafts.clear();saveFailed=false;render();}
+          else saveFailed=true;
+        } finally {
+          gridSaving=false;$('gridWrap').inert=false;gridStatus();
+          if(focusId && (document.activeElement===document.body || document.activeElement===focused)) {
+            const next=[...$('gridWrap').querySelectorAll('[data-field]')].find(n=>n.dataset.id===focusId&&n.dataset.field===focusField);
+            if(next){next.focus();if(caret!==null&&next.type==='text')next.setSelectionRange(caret,caret);}
+          }
+        }
+      };
+      function scheduleSave(){
+        clearTimeout(autosaveTimer);
+        if(!saveFailed)autosaveTimer=setTimeout(saveGrid,700);
+      }
+      $('gridWrap').addEventListener('change',scheduleSave);
+      $('gridWrap').addEventListener('focusout',scheduleSave);
+      $('gridWrap').addEventListener('keydown',event=>{
+        if(event.key==='Enter'&&event.target.dataset.field){event.preventDefault();event.target.blur();scheduleSave();}
+      });
+      $('newTopicBtn').onclick=()=>{
+        if(gridDrafts.size)return announce('Tablo kaydı tamamlandıktan sonra yeni konu açabilirsiniz.','info');
+        clearForm();$('topicDrawer').showModal();$('topic').focus();
+      };
+      function closeDrawer(event){
+        if(form.dataset.dirty==='true'&&!confirm('Kaydedilmemiş form değişikliklerinden vazgeçilsin mi?')){event?.preventDefault();return;}
+        clearForm();
+      }
+      $('closeDrawer').onclick=closeDrawer;
+      $('topicDrawer').addEventListener('cancel',closeDrawer);
+      $('quickAdd').onsubmit=async event=>{
+        event.preventDefault();
+        if(gridDrafts.size||state.saving||uncertainWrite)return announce('Önce devam eden tablo kaydını tamamlayın.','info');
+        const name=$('quickTopic').value.trim();if(!name)return;
+        const button=$('quickAdd').querySelector('button');button.disabled=true;
+        try{
+          const topic={id:crypto.randomUUID(),sheet:state.activeSheet==='all'?state.sheets[0]:state.activeSheet,topic:name,owner:$('quickOwner').value.trim(),service:'',topicType:'',priority:'',status:'Aktif',closingDate:'',current:'',updates:[]};
+          if(await persist([...state.topics,topic],state.sheets)){$('quickAdd').reset();render();announceSaved('Konu eklendi.');}
+        }finally{button.disabled=false;}
+      };
+      function matchesQuickFilter(topic){
+        if(quickFilter==='all')return true;
+        if(topic.status==='Kapandı')return false;
+        const today=localDate(),closing=calendarDateValue(topic.closingDate);
+        if(quickFilter==='high')return Number(topic.priority)>=4;
+        if(quickFilter==='unassigned')return !topic.owner?.trim();
+        if(quickFilter==='late')return closing&&closing<today;
+        if(quickFilter==='weekly')return !topic.updates.some(u=>weekRangeLabel(u.date)===weekRangeLabel(today));
+        const end=new Date(today+'T12:00:00');end.setDate(end.getDate()+7);
+        const limit=end.getFullYear()+'-'+String(end.getMonth()+1).padStart(2,'0')+'-'+String(end.getDate()).padStart(2,'0');
+        return closing&&closing>=today&&closing<=limit;
+      }
+      $('quickFilters').onclick=event=>{
+        const button=event.target.closest('[data-quick]');if(!button)return;
+        quickFilter=button.dataset.quick;
+        document.querySelectorAll('[data-quick]').forEach(b=>b.classList.toggle('active',b===button));render();
+      };
+      $('toggleColumns').onclick=()=>{
+        const compact=$('gridWrap').classList.toggle('compact-columns');
+        $('toggleColumns').textContent=compact?'Tüm sütunları göster':'Sade tabloya dön';
+        $('toggleColumns').setAttribute('aria-pressed',String(!compact));
+      };
+      // A recoverable draft download is available even when the server cannot be reached.
+      const draftButton=document.createElement('button');
+      draftButton.className='button';draftButton.textContent='JSON taslağını indir';
+      document.querySelector('.workbar').append(draftButton);
+      draftButton.onclick=()=>{
+        const payload={version:1,sheets:state.sheets,topics:state.topics.map(t=>({...t,...gridDrafts.get(t.id)}))};
+        const url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));
+        const a=document.createElement('a');a.href=url;a.download='is-takip-kaydedilmemis-taslak.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      };
+      window.addEventListener('beforeunload',event=>{if(gridDrafts.size||form.dataset.dirty==='true'||$('quickTopic').value.trim()||$('weeklyDialog').open&&$('weeklyNote').value.trim()||state.saving||uncertainWrite){event.preventDefault();event.returnValue='';}});
+      // Never redraw a field while the user is editing it.
+      setInterval(async()=>{
+        if(document.hidden||uncertainWrite||state.saving||gridDrafts.size||form.dataset.dirty==='true'||$('topicId').value||document.activeElement?.closest('#gridWrap')||state.backend!=='localApi') return;
+        try {
+          const response=await fetch('/api/data',{cache:'no-store'});
+          if(!response.ok) throw new Error('Sunucuya erişilemiyor');
+          const etag=response.headers.get('ETag');
+          if(uncertainWrite||state.saving||gridDrafts.size||form.dataset.dirty==='true'||$('topicId').value||document.activeElement?.closest('#gridWrap')) return;
+          if(etag!==state.remoteEtag) {
+            const data=validateData(await response.json());
+            state.topics=data.topics;state.sheets=data.sheets;state.baseTopics=copy(data.topics);state.baseSheets=[...data.sheets];state.remoteEtag=etag;render();
+          }
+          state.projectStorage=true;setStorageLabel();
+        } catch(error) {state.projectStorage=false;setStorageLabel();}
+      },3000);
+
+      loadData();
+    })();
+  </script>
+</body>
+</html>
