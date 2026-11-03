@@ -17,3 +17,15 @@
 **/dist/
 /gelistirme/
 /IsTakip-Yeni-Surum/
+
+# v2.5 runtime, credentials and test artifacts
+node_modules/
+.env
+*.zip
+.tools/
+test-output/
+test-data/
+
+.env.*
+!.env.example
+*.log

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>İş Takip v2.5</title>
+  <script src="./assets/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="brand">
+        <div class="logo-mark" aria-hidden="true">TT</div>
+        <div><div class="eyebrow">İŞ TAKİP · v2.5</div><h1>İş Takip <small style="font-size:13px;color:#05bec8">v2.5</small></h1><div class="brand-subtitle">Ortak ağ klasörü için görev yönetimi</div></div>
+      </div>
+      <nav class="top-actions" aria-label="Üst menü">
+        <button class="button ghost" id="connectFolder" hidden>JSON klasörünü seç</button><button class="button ghost" id="loginBtn" hidden>Oturumu yenile</button><button class="button ghost" id="logoutBtn" hidden>Oturumu kapat</button><span class="save-status" id="saveStatus" aria-live="polite">Veri kaynağı seçiliyor</span>
+        <button class="button ghost" id="importExcelBtn" type="button">Excel içe aktar</button>
+        <a class="button ghost" href="./report.html" target="_blank" rel="noopener">Excel rapor ekranı</a>
+        <button class="button ghost" id="exportExcelBtn" type="button">Excel çıktısı</button>
+        <button class="button primary" id="htmlReportBtn" type="button">Yönetici HTML raporu indir</button>
+        <button class="button ghost" id="backupBtn" type="button">JSON yedek indir</button>
+        <button class="button ghost" id="restoreBtn" type="button">Yedekten yükle</button>
+      </nav>
+    </div>
+  </header>
+  <main class="app"><section id="storageBanner" class="notice show info" role="status"></section>
+    <div class="workspace-heading"><div><span class="eyebrow">EKİBİN ORTAK ÇALIŞMA ALANI</span><h2>İşler, tek bir yerde.</h2><p class="intro">Konuları güncelleyin, haftayı takip edin ve raporunuzu hazırlayın.</p></div><button class="button primary" id="newTopicBtn">+ Yeni konu</button></div>
+    <section class="workbar"><span id="gridStatus" aria-live="polite">Değişiklik yok</span><button class="button" id="discardGrid">Tablo değişikliklerinden vazgeç</button><button class="button primary" id="saveGrid">Şimdi kaydet</button></section>
+    <section id="insights" class="insights" aria-label="Takip sinyalleri"></section>
+    <div class="notice" id="notice" role="status"></div>
+    <section class="metrics" aria-label="Konu özeti">
+      <div class="metric"><span>TOPLAM KONU</span><strong id="totalCount">0</strong></div>
+      <div class="metric active"><span>AKTİF</span><strong id="activeCount">0</strong></div>
+      <div class="metric closed"><span>KAPANDI</span><strong id="closedCount">0</strong></div>
+      <div class="metric pending"><span>ASKIDA</span><strong id="holdCount">0</strong></div>
+    </section>
+    <section class="layout">
+      <dialog id="topicDrawer" class="panel form-panel" aria-labelledby="formTitle">
+<button class="drawer-close button" id="closeDrawer" type="button" aria-label="Konu panelini kapat">×</button>
+        <div class="panel-title"><div><h2 id="formTitle">Yeni konu ekle</h2><p class="panel-hint">Konu ve etkilenen servis bilgilerini girin.</p></div></div>
+        <form id="topicForm">
+          <input id="topicId" type="hidden">
+          <div class="form-grid">
+            <div class="field full"><label for="topicSheet">Excel sayfası</label><select id="topicSheet"></select></div>
+            <div class="field full"><label for="topic">Konu *</label><input id="topic" maxlength="240" required placeholder="Örn. Servis geçiş planı"></div>
+            <div class="field full"><label for="owner">Sorumlu</label><input id="owner" maxlength="160" placeholder="Ad soyad"></div>
+            <div class="field full"><label for="serviceTagInput">Etkilenen servisler</label><input id="service" type="hidden"><div id="serviceTags" class="service-tags" aria-live="polite"></div><input id="serviceTagInput" class="service-entry" maxlength="160" list="serviceOptions" placeholder="Servis adı yazıp Enter'a basın"><datalist id="serviceOptions"></datalist><p class="topic-meta">Her servis için yazıp Enter'a basın; etiketleri × ile kaldırabilirsiniz.</p></div>
+            <div class="field"><label for="topicType">Proje / Talep</label><input id="topicType" maxlength="100" list="topicTypeOptions" placeholder="Proje veya Talep"><datalist id="topicTypeOptions"><option value="Proje"></option><option value="Talep"></option></datalist></div>
+            <div class="field"><label for="priority">Önem (1–5)</label><select id="priority"><option value="">Belirtilmedi</option><option value="1">1 · Düşük</option><option value="2">2</option><option value="3">3 · Orta</option><option value="4">4</option><option value="5">5 · Yüksek</option></select></div>
+            <div class="field"><label for="status">Durum</label><select id="status"><option value="Aktif">Aktif</option><option value="Kapandı">Kapandı</option><option value="Askıda">Askıda</option></select></div>
+            <div class="field"><label for="closingDate">Planlanan kapanış tarihi</label><input id="closingDate" type="date"><input id="closingDateNote" type="text" maxlength="160" placeholder="Tarih yerine planlama notu" style="margin-top:7px"><p class="topic-meta">Takvimden tarih seçin veya “Planlanıyor” gibi bir not yazın.</p></div>
+            <div class="form-section">Güncel takip</div>
+            <div class="field full"><label for="current">Güncel durum / sonraki adım</label><textarea id="current" maxlength="2000" placeholder="Son durum, blokaj veya sonraki adım"></textarea></div>
+          </div>
+          <div class="form-actions"><button class="button primary" id="saveTopicBtn" type="submit">Konuyu kaydet</button><button class="button" id="resetFormBtn" type="button">Formu temizle</button><button class="button hidden" id="cancelEditBtn" type="button">Vazgeç</button></div>
+        </form>
+      </dialog>
+      <section class="panel list-panel" aria-label="Konu listesi">
+        <div class="sheet-bar" id="sheetBar" aria-label="Excel sayfaları"></div>
+        <div class="list-head">
+          <div class="list-heading"><h2>Konular</h2><button class="button small" id="toggleColumns" type="button" aria-pressed="false">Tüm sütunları göster</button><span class="count" id="resultCount">0 kayıt</span></div>
+          <div class="filters">
+            <input id="searchInput" type="search" placeholder="Konu, servis veya not ara..." aria-label="Konu ara">
+            <select id="statusFilter" aria-label="Duruma göre filtrele"><option value="">Tüm durumlar</option><option value="Aktif">Aktif</option><option value="Kapandı">Kapandı</option><option value="Askıda">Askıda</option></select>
+            <select id="priorityFilter" aria-label="Öneme göre filtrele"><option value="">Tüm önemler</option><option value="1">Önem 1</option><option value="2">Önem 2</option><option value="3">Önem 3</option><option value="4">Önem 4</option><option value="5">Önem 5</option><option value="none">Önem belirtilmedi</option></select>
+            <select id="serviceFilter" aria-label="Servise göre filtrele"><option value="">Tüm servisler</option></select>
+          </div>
+          <div class="filter-summary"><span id="activeFilterSummary">Tüm konular görüntüleniyor</span><button class="clear-filters" id="clearFiltersBtn" type="button">Filtreleri temizle</button></div>
+        </div>
+        <div class="quick-filters" id="quickFilters" aria-label="Hızlı takip filtreleri">
+<button class="sheet-tab active" data-quick="all">Tüm işler</button><button class="sheet-tab" data-quick="weekly">Bu hafta güncellenmeyen</button><button class="sheet-tab" data-quick="late">Geciken</button><button class="sheet-tab" data-quick="soon">7 gün içinde kapanacak</button><button class="sheet-tab" data-quick="high">Yüksek öncelikli</button><button class="sheet-tab" data-quick="unassigned">Sorumlusu eksik</button>
+</div><div class="grid-help">Hücreyi düzenleyip Tab veya Enter ile ilerleyin; değişiklik otomatik kaydedilir. + ile haftalık not ekleyin. Excel’den çoklu hücre yapıştırabilirsiniz.</div>
+        <div id="gridWrap" class="table-wrap compact-columns"></div>
+        <form id="quickAdd" class="quick-add"><span aria-hidden="true">＋</span><input id="quickTopic" required maxlength="240" aria-label="Yeni konu" placeholder="Yeni konu yazın…"><input id="quickOwner" maxlength="160" aria-label="Yeni konunun sorumlusu" placeholder="Sorumlu (isteğe bağlı)"><button class="button primary" type="submit">Ekle</button></form>
+        <div class="empty hidden" id="emptyState"><strong>Henüz gösterilecek konu yok</strong>Yeni konu ekleyin veya bir Excel dosyasından içe aktarın.</div>
+      </section>
+    </section>
+  </main>
+<dialog id="loginDialog" aria-labelledby="loginTitle">
+  <form id="loginForm">
+    <div class="eyebrow" style="color:#0082ca">İŞ TAKİP v2.5</div><h2 id="loginTitle">Çalışma alanınıza giriş yapın</h2>
+    <p class="panel-hint">Kurum sunucusundaki hesabınızı kullanın.</p>
+    <div class="field"><label for="username">Kullanıcı adı</label><input id="username" autocomplete="username" required maxlength="100"></div>
+    <div class="field"><label for="password">Parola</label><input id="password" type="password" autocomplete="current-password" required maxlength="512"></div>
+    <p id="loginError" role="alert"></p><div class="dialog-actions"><button class="button" type="button" onclick="this.closest('dialog').close()">Kapat</button><button class="button primary" id="loginSubmit">Giriş yap</button></div>
+  </form>
+</dialog>
+<dialog id="folderDialog" aria-labelledby="folderTitle">
+  <h2 id="folderTitle">JSON veri dosyası</h2><p id="folderName" class="panel-hint"></p>
+  <p class="panel-hint">Mevcut İş Takip JSON dosyanızı açın veya boş bir çalışma dosyası oluşturun. Eski .db dosyası JSON değildir; eski uygulamadan JSON yedek indirin.</p>
+  <div class="field"><label for="jsonChoice">Klasördeki JSON dosyaları</label><select id="jsonChoice"></select></div>
+  <p id="folderError" role="alert"></p>
+  <div class="dialog-actions"><button class="button" type="button" onclick="this.closest('dialog').close()">Vazgeç</button><button class="button" id="createJson">Yeni dosya</button><button class="button primary" id="openJson">Seçileni aç</button></div>
+</dialog>
+
+  <footer class="site-footer">
+    <p>İş Takip v2.5 · Yönetici raporu kaydedilmiş verilerden hazırlanır.</p>
+  </footer>
+    <input class="file-input" id="excelFile" type="file" accept=".xlsx,.xls,.csv">
+    <input class="file-input" id="jsonFile" type="file" accept=".json">
+    <dialog id="sheetDialog">
+      <form id="sheetForm">
+        <h2>Yeni Excel sayfası</h2>
+        <p class="panel-hint">Sayfa adı, dışa aktarılan Excel’de çalışma sayfası adı olarak kullanılır.</p>
+        <div class="field" style="margin-top:14px"><label for="newSheetName">Sayfa adı</label><input id="newSheetName" maxlength="31" required placeholder="Örn. Servis Yönetimi"></div>
+        <div class="dialog-actions"><button class="button" id="cancelSheetBtn" type="button">Vazgeç</button><button class="button primary" type="submit">Sayfa oluştur</button></div>
+      </form>
+    </dialog>
+    <dialog id="weeklyDialog">
+      <form id="weeklyForm">
+        <h2>Haftalık güncelleme ekle</h2>
+        <p class="panel-hint" id="weeklyTopicTitle"></p>
+        <div class="field" style="margin-top:14px"><label for="weeklyWeekRange">İşlenecek hafta</label><input id="weeklyWeekRange" type="text" readonly></div>
+        <div class="field" style="margin-top:12px"><label for="weeklyExactDate">Eklenme tarihi</label><input id="weeklyExactDate" type="text" readonly></div>
+        <div class="field" style="margin-top:12px"><label for="weeklyNote">Haftalık not *</label><textarea id="weeklyNote" maxlength="2000" required placeholder="Bu hafta yapılanlar, mevcut durum veya sonraki adım"></textarea></div>
+        <div class="dialog-actions"><button class="button" id="cancelWeeklyBtn" type="button">Vazgeç</button><button class="button primary" id="saveWeeklyBtn" type="submit">Güncellemeyi kaydet</button></div>
+      </form>
+    </dialog>
+  <script src="./storage.js"></script><script src="./app.js"></script></body>
+</html>
